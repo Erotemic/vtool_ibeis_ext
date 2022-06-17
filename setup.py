@@ -270,7 +270,7 @@ if __name__ == '__main__':
         long_description_content_type='text/x-rst',
         license='Apache 2',
         packages=find_packages('.'),
-        python_requires='>=3.6',
+        python_requires='>=3.7',
         classifiers=[
             # List of classifiers available at:
             # https://pypi.python.org/pypi?%3Aaction=list_classifiers
@@ -283,7 +283,7 @@ if __name__ == '__main__':
             # Supported Python versions
             # 'Programming Language :: Python :: 2.7',
             # 'Programming Language :: Python :: 3.5',
-            'Programming Language :: Python :: 3.6',
+            # 'Programming Language :: Python :: 3.6',
             'Programming Language :: Python :: 3.7',
             'Programming Language :: Python :: 3.8',
             'Programming Language :: Python :: 3.9',

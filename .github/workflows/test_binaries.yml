@@ -50,7 +50,7 @@ jobs:
 
     steps:
     - name: Checkout source
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     # Configure compilers for Windows 64bit.
     - name: Enable MSVC 64bit
@@ -79,7 +79,7 @@ jobs:
 
     # See: https://github.com/pypa/cibuildwheel/blob/main/action.yml
     - name: Build wheels
-      uses: pypa/cibuildwheel@v2.3.1
+      uses: pypa/cibuildwheel@2.6.1
       with:
         output-dir: wheelhouse
         config-file: pyproject.toml
@@ -118,7 +118,7 @@ jobs:
         find . -name coverage.xml
 
     - name: Codecov Upload
-      uses: codecov/codecov-action@v2.1.0
+      uses: codecov/codecov-action@v3.1.0
       with:
         file: ./tests/coverage.xml
 
@@ -137,7 +137,7 @@ jobs:
     needs: [build_and_test_wheels]
     steps:
       - name: Checkout source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Download wheels and sdist
         uses: actions/download-artifact@v3
@@ -196,7 +196,7 @@ jobs:
     needs: [build_and_test_wheels]
     steps:
       - name: Checkout source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Download wheels and sdist
         uses: actions/download-artifact@v3
@@ -247,34 +247,34 @@ jobs:
               DO_TAG=False ./publish.sh
 
 
-.debugging:
-  - | 
+#.debugging:
+#  - | 
 
-    IMAGE_NAME=quay.io/pypa/manylinux2014_x86_64
-    docker run -v $PWD:/io:ro -v $HOME/.cache/pip:/pip_cache -it $IMAGE_NAME bash
+#    IMAGE_NAME=quay.io/pypa/manylinux2014_x86_64
+#    docker run -v $PWD:/io:ro -v $HOME/.cache/pip:/pip_cache -it $IMAGE_NAME bash
 
-    # Will need to chmod things afterwords
-    export PIP_CACHE_DIR=/pip_cache
-    echo $PIP_CACHE_DIR
-    chmod -R o+rw $PIP_CACHE_DIR
-    chmod -R o+rw $PIP_CACHE_DIR
-    chmod -R g+rw $PIP_CACHE_DIR
-    USER=$(whoami)
-    chown -R $USER $PIP_CACHE_DIR
-    cd $HOME
-    git clone /io ./repo
+#    # Will need to chmod things afterwords
+#    export PIP_CACHE_DIR=/pip_cache
+#    echo $PIP_CACHE_DIR
+#    chmod -R o+rw $PIP_CACHE_DIR
+#    chmod -R o+rw $PIP_CACHE_DIR
+#    chmod -R g+rw $PIP_CACHE_DIR
+#    USER=$(whoami)
+#    chown -R $USER $PIP_CACHE_DIR
+#    cd $HOME
+#    git clone /io ./repo
 
-    cd $HOME/repo
+#    cd $HOME/repo
 
-    # Make a virtualenv
-    PY_EXE=/opt/python/cp37-cp37m/bin/python
-    PYVER=$($PY_EXE -c "import sys; print('{}{}'.format(*sys.version_info[0:2]))")
-    $PY_EXE -m pip install virtualenv
-    $PY_EXE -m virtualenv venv$PYVER
-    source venv$PYVER/bin/activate
-    #pip install pip -U
-    #pip install pip setuptools -U
-    #
-    #yum install mlocate
-    #yum install opencv opencv-devel
-    export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+#    # Make a virtualenv
+#    PY_EXE=/opt/python/cp37-cp37m/bin/python
+#    PYVER=$($PY_EXE -c "import sys; print('{}{}'.format(*sys.version_info[0:2]))")
+#    $PY_EXE -m pip install virtualenv
+#    $PY_EXE -m virtualenv venv$PYVER
+#    source venv$PYVER/bin/activate
+#    #pip install pip -U
+#    #pip install pip setuptools -U
+#    #
+#    #yum install mlocate
+#    #yum install opencv opencv-devel
+#    export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH

@@ -1,172 +1,124 @@
-###
-# CMakeLists for vtool_ibeis_ext C/C++/Cuda Python extention modules
-#
-# Notes:
-# https://github.com/Erotemic/netharn/issues/7
-# https://github.com/amueller/word_cloud/pull/42ci
+cmake_minimum_required(VERSION 3.1.0)
 
-cmake_minimum_required(VERSION 3.13.0)
+set(CMAKE_CXX_STANDARD 11)
 
-project(vtool_ibeis_ext LANGUAGES C CXX)
-
-option(USE_CUDA "Build with CUDA" TRUE)
-option(vtool_ibeis_ext_VERBOSE "Print extra info" FALSE)
-
-
-if (USE_CUDA)
-    include(CheckLanguage)
-    check_language(CUDA)
-    if(CMAKE_CUDA_COMPILER)
-        enable_language(CUDA)
-    elseif()
-        message(STATUS "CUDA not found, CUDA library will not be built")
-        set(USE_CUDA OFF)
-    endif()
+#######################################
+# Clang2 = Clang + OpenMP built for OSX Mavericks
+# http://goo.gl/1Tg0Zj
+if (APPLE)
+    set(CMAKE_MACOSX_RPATH 1)
+    message(STATUS "Detected APPLE system")
+    SET(CLANG2 Off)
 endif()
+
+if (APPLE AND CLANG2)
+    message(STATUS "Using clang2")
+    set(CMAKE_C_COMPILER "clang2")
+    set(CMAKE_CXX_COMPILER "clang2++")
+endif()
+
+#######################################
+project(sver LANGUAGES C CXX) #### !!!!IMPORTANT!!!! THIS MUST BE DOWN HERE FOR CLANG2
+#set(CMAKE_BUILD_TYPE "Release")
+
+if (APPLE)
+    #MacPorts
+    message(STATUS "USING MACPORTS")
+    # Fixme: newstyle include and link
+    include_directories(/opt/local/include)
+    link_directories(/opt/local/lib)
+endif()
+
+#######################################
+if(APPLE AND CLANG2)
+    # Add flags to support clang2
+    message(STATUS "APPLE + CLANG2: Adding stdlib flags for clang")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -stdlib=libc++")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lc++")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lc++")
+else()
+    # TODO: this is gcc only, fix for clang
+    #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
+
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -stdlib=libc++")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+#set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lc++")
+#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lc++")
 
 # Setup basic python stuff and ensure we have skbuild
-###
-# Private helper function to execute `python -c "<cmd>"`
-#
-# Runs a python command and populates an outvar with the result of stdout.
-# Be careful of indentation if `cmd` is multiline.
-#
-function(pycmd outvar cmd)
-  execute_process(
-    COMMAND "${PYTHON_EXECUTABLE}" -c "${cmd}"
-    RESULT_VARIABLE _exitcode
-    OUTPUT_VARIABLE _output)
-  if(NOT ${_exitcode} EQUAL 0)
-    message(ERROR "Failed when running python code: \"\"\"
-${cmd}\"\"\"")
-    message(FATAL_ERROR "Python command failed with error code: ${_exitcode}")
-  endif()
-  # Remove supurflous newlines (artifacts of print)
-  string(STRIP "${_output}" _output)
-  set(${outvar} "${_output}" PARENT_SCOPE)
-endfunction()
+#list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/CMake")
+#include( skbuild-helpers )
+
+#######################################
 
 
-###
-# Find current python major version user option
-#
+# OpenCV_ROOT_DIR=$HOME/.local
+# OpenCV_ROOT_DIR=$HOME/.local python setup.py develop
+#set(OpenCV_FIND_REQUIRED_COMPONENTS)
+find_package( OpenCV REQUIRED )
+IF(OpenCV_FOUND)
+  message(STATUS "Found OpenCV! ^_^")
+  message(STATUS "OpenCV_FOUND = ${OpenCV_FOUND}")
+  message(STATUS "OpenCV_INCLUDE_DIR = ${OpenCV_INCLUDE_DIR}")
+  message(STATUS "OpenCV_LIBRARIES = ${OpenCV_LIBRARIES}")
+  message(STATUS "OpenCV_LINK_DIRECTORIES = ${OpenCV_LINK_DIRECTORIES}")
+  message(STATUS "OpenCV_ROOT_DIR = ${OpenCV_ROOT_DIR}")
+ELSE()
+  message(FATAL_ERROR "Missing OpenCV! x.x")
+ENDIF()
 
-find_package(PythonInterp REQUIRED)
-find_package(PythonLibs REQUIRED)
-include_directories(SYSTEM ${PYTHON_INCLUDE_DIR})
+#######################################
+find_package(OpenMP)
+IF(OPENMP_FOUND)
+    message(STATUS "Found OpenMP! ^_^")
+    # add flags for OpenMP
+    #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS} -fopenmp")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -fopenmp")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${OpenMP_C_FLAGS} ${OpenMP_SHARED_LINKER_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_C_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+ELSE()
+  message(STATUS "Missed OpenMP! x_x")
+ENDIF()
 
+option(ENABLE_GPROF Off)
+IF(ENABLE_GPROF)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
+    SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -pg")
+ENDIF()
 
-###
-# Find scikit-build and include its cmake resource scripts
-#
-if (NOT SKBUILD)
-  pycmd(skbuild_location "import os, skbuild; print(os.path.dirname(skbuild.__file__))")
-  set(skbuild_cmake_dir "${skbuild_location}/resources/cmake")
-  # If skbuild is not the driver, then we need to include its utilities in our CMAKE_MODULE_PATH
-  list(APPEND CMAKE_MODULE_PATH ${skbuild_cmake_dir})
-endif()
+#######################################
+set(SOURCE_FILES
+    cppsrc/sver.cpp)
 
+message(STATUS "OpenMP_SHARED_LINKER_FLAGS = ${OpenMP_SHARED_LINKER_FLAGS}")
+message(STATUS "OpenMP_EXE_LINKER_FLAGS = ${OpenMP_EXE_LINKER_FLAGS}")
+message(STATUS "OpenCV_INCLUDE_DIR = ${OpenCV_INCLUDE_DIR}")
+message(STATUS "OpenCV_LIBRARIES = ${OpenCV_LIBRARIES}")
 
-
-###
-# Status string for debugging
-#
-set(PYTHON_SETUP_STATUS "
-  * PYTHON_EXECUTABLE = \"${PYTHON_EXECUTABLE}\"
-
-  * PYTHON_INCLUDE_DIR = \"${PYTHON_INCLUDE_DIR}\"
-  * PYTHON_LIBRARY = \"${PYTHON_LIBRARY}\"
-  * PYTHON_LIBRARY_DEBUG = \"${PYTHON_LIBRARY_DEBUG}\"
-
-  * skbuild_location = \"${skbuild_location}\"
-  * skbuild_cmake_dir = \"${skbuild_cmake_dir}\"
-")
-
-
-
-find_package(Cython REQUIRED)
-find_package(NumPy REQUIRED)
-
-
-function(cpu_cython_module cython_source module_name)
-  # Translate Cython into C/C++
-  add_cython_target(${module_name} "${cython_source}" C OUTPUT_VAR sources)
-  # Create C++ library. Specify include dirs and link libs as normal
-  add_library(${module_name} MODULE ${sources})
-  target_include_directories(
-    ${module_name}
-    PUBLIC
-      ${NumPy_INCLUDE_DIRS}
-      ${PYTHON_INCLUDE_DIRS}
-  )
-  #target_link_libraries(${module_name} ${PYTHON_LIBRARIES})
-  #target_link_libraries(${module_name})
-  #${PYTHON_LIBRARIES})
-
-  target_compile_definitions(${module_name} PUBLIC
-    "NPY_NO_DEPRECATED_API"
-    #"NPY_1_7_API_VERSION=0x00000007"
-    )
-
-  # Transform the C++ library into an importable python module
-  python_extension_module(${module_name})
-  # Install the C++ module to the correct relative location
-  # (this will be an inplace build if you use `pip install -e`)
-  file(RELATIVE_PATH _install_dest "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
-  install(TARGETS ${module_name} LIBRARY DESTINATION "${_install_dest}")
-endfunction(cpu_cython_module)
+# Use MODULE instead of SHARED for windows
+add_library(sver MODULE ${SOURCE_FILES})
 
 
 
-# Typically you would place this CMake code next to your Cython module
-#add_subdirectory("vtool_ibeis_ext/submod/submod")
-option(BUILD_CPU_FEATURE "A Cython CPU Feature" True)
-if (BUILD_CPU_FEATURE)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+#if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+#    # Set the DLLEXPORT variable to export symbols
+#    target_compile_definitions(sver PRIVATE HESAFF_WIN_EXPORT)
+#endif()
 
-  #set(cython_source "cpu_nms.pyx")
-  #set(module_name "cpu_nms")
-  cpu_cython_module("cpu_nms.pyx" "cpu_nms")
+target_include_directories(sver PRIVATE ${OpenCV_INCLUDE_DIR})
 
-  #set(cython_source "cpu_soft_nms.pyx")
-  #set(module_name "cpu_soft_nms.pyx")
-  cpu_cython_module("cpu_soft_nms.pyx" "cpu_soft_nms")
-endif()
-
-
-
-set(vtool_ibeis_ext_CONFIG_STATUS "
-PYTHON_CONFIG_STATUS
-====================
-
-Include Dirs:
-  * CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES = \"${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}\"
-  * NumPy_INCLUDE_DIRS = \"${NumPy_INCLUDE_DIRS}\"
-  * PYTHON_INCLUDE_DIRS = \"${PYTHON_INCLUDE_DIRS}\"
-
-status(Cython):
-  * CYTHON_FOUND = \"${CYTHON_FOUND}\"
-  * CYTHON_EXECUTABLE = \"${CYTHON_EXECUTABLE}\"
-  * CYTHON_VERSION = \"${CYTHON_VERSION}\"
-
-status(NumPy):
-  * NumPy_FOUND = \"${NumPy_FOUND}\"
-  * NumPy_INCLUDE_DIRS = \"${NumPy_INCLUDE_DIRS}\"
-  * NumPy_VERSION = \"${NumPy_VERSION}\"
-  * NumPy_CONV_TEMPLATE_EXECUTABLE = \"${NumPy_CONV_TEMPLATE_EXECUTABLE}\"
-  * NumPy_FROM_TEMPLATE_EXECUTABLE = \"${NumPy_FROM_TEMPLATE_EXECUTABLE}\"
-
-status(PythonExtensions):
-  * PYTHON_PREFIX = \"${PYTHON_PREFIX}\"
-  * PYTHON_SITE_PACKAGES_DIR = \"${PYTHON_SITE_PACKAGES_DIR}\"
-  * PYTHON_RELATIVE_SITE_PACKAGES_DIR = \"${PYTHON_RELATIVE_SITE_PACKAGES_DIR}\"
-  * PYTHON_SEPARATOR = \"${PYTHON_SEPARATOR}\"
-  * PYTHON_PATH_SEPARATOR = \"${PYTHON_PATH_SEPARATOR}\"
-  * PYTHON_EXTENSION_MODULE_SUFFIX = \"${PYTHON_EXTENSION_MODULE_SUFFIX}\"
-
-status(python-setup)
-${PYTHON_SETUP_STATUS}
-")
-
-if (vtool_ibeis_ext_VERBOSE)
-  message(STATUS ${vtool_ibeis_ext_CONFIG_STATUS})
-endif ()
+#######################################
+target_link_libraries(sver PRIVATE ${OpenCV_LIBRARIES})
+# I think: An install target is required so scikit-build knows where the binaries are
+# https://github.com/scikit-build/scikit-build/issues/434
+# Note: if the target is not referenced by package_data in setup.py then the
+# lib will be installed as a data file and not a package file.
+#install(TARGETS sver LIBRARY DESTINATION "vtool_ibeis_ext")
+install(TARGETS sver DESTINATION vtool_ibeis_ext/lib)
