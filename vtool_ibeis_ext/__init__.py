@@ -1,5 +1,8 @@
-__version__ = '0.0.1'
+__version__ = '0.1.0'
+__author__ = 'Jon Crall'
+__author_email__ = 'erotemic@gmail.com'
+__url__ = 'https://github.com/Erotemic/vtool_ibeis_ext'
 
 __mkinit__ = """
-mkinit /home/joncrall/code/vtool_ibeis_ext/vtool_ibeis_ext/__init__.py
+mkinit -m vtool_ibeis_ext
 """
