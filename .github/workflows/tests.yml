@@ -49,7 +49,6 @@ jobs:
         python -m pip install -r requirements/tests.txt
         python -m pip install -r requirements/runtime.txt
         python -m pip install -r requirements/headless.txt
-        python -m pip install -r requirements/gdal.txt
     - name: Build sdist
       shell: bash
       run: |-
