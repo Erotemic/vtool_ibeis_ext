@@ -29,7 +29,7 @@ manylinux-i686-image = "quay.io/erotemic/manylinux2014_i686_for:opencv"
 ignore_missing_imports = true
 
 [tool.xcookie]
-tags = [ "github", "binpy", "erotemic", "cv2",]
+tags = [ "github", "binpy", "erotemic", "cv2", "nosrcdist"]
 mod_name = "vtool_ibeis_ext"
 repo_name = "vtool_ibeis_ext"
 rel_mod_parent_dpath = "."
@@ -37,7 +37,7 @@ rel_mod_parent_dpath = "."
 os = [ "linux" ]
 min_python = 3.7
 version = "{mod_dpath}/__init__.py::__version__"
-author = "Jon Crall"
+author = ["Jon Crall", "Avi Weinstock"]
 author_email = "erotemic@gmail.com"
 description = "The vtool_ibeis_ext module"
 license = "Apache 2"

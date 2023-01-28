@@ -36,7 +36,6 @@ Example:
     >>> out_inliers, out_errors, out_mats = get_affine_inliers_cpp(kpts1, kpts2, fm, fs, xy_thresh_sqrd, scale_thresh_sqrd, ori_thresh)
     >>> out_inliers, out_errors, out_mats = get_best_affine_inliers_cpp(kpts1, kpts2, fm, fs, xy_thresh_sqrd, scale_thresh_sqrd, ori_thresh)
 """
-from __future__ import absolute_import, division, print_function
 import ctypes as C
 import numpy as np
 import utool as ut
