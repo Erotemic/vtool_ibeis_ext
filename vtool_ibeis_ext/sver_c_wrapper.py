@@ -38,16 +38,25 @@ Example:
 """
 import ctypes as C
 import numpy as np
-import utool as ut
 import ubelt as ub
 from os.path import dirname, join
+
+
+if ub.WIN32:
+    lib_ext = '.dll'
+elif ub.DARWIN:
+    lib_ext = '.dylib'
+elif ub.LINUX:
+    lib_ext = '.so'
+else:
+    lib_ext = '.so'
 
 c_double_p = C.POINTER(C.c_double)
 
 # copied/adapted from _pyhesaff.py
 kpts_dtype = np.float64
 # this is because size_t is 32 bit on mingw even on 64 bit machines
-fm_dtype = np.int32 if ut.WIN32 else np.int64
+fm_dtype = np.int32 if ub.WIN32 else np.int64
 fs_dtype = np.float64
 FLAGS_RW = 'aligned, c_contiguous, writeable'
 FLAGS_RO = 'aligned, c_contiguous'
@@ -72,7 +81,7 @@ dpath = dirname(__file__)
 
 
 lib_fname_cand = list(ub.find_path(
-    name='libsver' + ut.util_cplat.get_lib_ext(),
+    name='libsver' + lib_ext,
     path=[
         join(dpath, 'lib'),
         dpath
@@ -90,24 +99,10 @@ else:
 
 
 if __name__ != '__main__':
-    # if ub.argflag('--rebuild-sver'):  # and __name__ != '__main__':
-    #     USE_CMAKE = True
-    #     if USE_CMAKE:
-    #         root_dir = realpath(dirname(__file__))
-    #         repo_dir = dirname(root_dir)
-    #         ut.std_build_command(repo_dir)
-    #     else:
-    #         cpp_fname = join(dpath, 'sver.cpp')
-    #         cflags = '-shared -fPIC -O2 -ffast-math'
-    #         cmd_fmtstr = 'g++ -Wall -Wextra {cpp_fname} -lopencv_core {cflags} -o {lib_fname}'
-    #         cmd_str = cmd_fmtstr.format(**locals())
-    #         ut.cmd(cmd_str)
-
     try:
         c_sver = C.cdll[lib_fname]
     except Exception:
         print('Failed to open lib_fname = %r' % (lib_fname,))
-        ut.checkpath(lib_fname, verbose=True)
         raise
     c_getaffineinliers = c_sver['get_affine_inliers']
     c_getaffineinliers.restype = C.c_int
@@ -132,19 +127,16 @@ if __name__ != '__main__':
 
 def get_affine_inliers_cpp(kpts1, kpts2, fm, fs, xy_thresh_sqrd, scale_thresh_sqrd, ori_thresh):
     #np.ascontiguousarray(kpts1)
-    #with ut.Timer('PreC'):
     num_matches = len(fm)
     fm = np.ascontiguousarray(fm, dtype=fm_dtype)
     out_inlier_flags = np.empty((num_matches, num_matches), np.bool)
     out_errors = np.empty((num_matches, 3, num_matches), np.float64)
     out_mats = np.empty((num_matches, 3, 3), np.float64)
-    #with ut.Timer('C'):
     c_getaffineinliers(kpts1, kpts1.size,
                        kpts2, kpts2.size,
                        fm, fs, len(fm),
                        xy_thresh_sqrd, scale_thresh_sqrd, ori_thresh,
                        out_inlier_flags, out_errors, out_mats)
-    #with ut.Timer('C'):
     out_inliers = [np.where(row)[0] for row in out_inlier_flags]
     out_errors = list(map(tuple, out_errors))
     return out_inliers, out_errors, out_mats
@@ -153,18 +145,15 @@ def get_affine_inliers_cpp(kpts1, kpts2, fm, fs, xy_thresh_sqrd, scale_thresh_sq
 def get_best_affine_inliers_cpp(kpts1, kpts2, fm, fs, xy_thresh_sqrd,
                                 scale_thresh_sqrd, ori_thresh):
     #np.ascontiguousarray(kpts1)
-    #with ut.Timer('PreC'):
     fm = np.ascontiguousarray(fm, dtype=fm_dtype)
     out_inlier_flags = np.empty((len(fm),), np.bool)
     out_errors = np.empty((3, len(fm)), np.float64)
     out_mat = np.empty((3, 3), np.float64)
-    #with ut.Timer('C'):
     c_getbestaffineinliers(kpts1, 6 * len(kpts1),
                            kpts2, 6 * len(kpts2),
                            fm, fs, len(fm),
                            xy_thresh_sqrd, scale_thresh_sqrd, ori_thresh,
                            out_inlier_flags, out_errors, out_mat)
-    #with ut.Timer('C'):
     out_inliers = np.where(out_inlier_flags)[0]
     out_errors = tuple(out_errors)
     return out_inliers, out_errors, out_mat
