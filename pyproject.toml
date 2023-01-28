@@ -1,5 +1,5 @@
 [build-system]
-requires = [ "setuptools>=41.0.1", "wheel", "scikit-build>=0.9.0", "numpy", "ninja",]
+requires = [ "setuptools>=41.0.1", "scikit-build>=0.11.1", "numpy", "ninja>=1.10.2", "cmake>=3.21.2", "cython>=0.29.24",]
 
 [tool.cibuildwheel]
 build = "cp37-* cp38-* cp39-* cp310-*"
@@ -32,6 +32,17 @@ ignore_missing_imports = true
 tags = [ "github", "binpy", "erotemic", "cv2",]
 mod_name = "vtool_ibeis_ext"
 repo_name = "vtool_ibeis_ext"
+rel_mod_parent_dpath = "."
+#os = [ "linux", "osx", "win",]
+os = [ "linux" ]
+min_python = 3.7
+version = "{mod_dpath}/__init__.py::__version__"
+author = "Jon Crall"
+author_email = "erotemic@gmail.com"
+description = "The vtool_ibeis_ext module"
+license = "Apache 2"
+dev_status = "beta"
+
 
 #[tool.cibuildwheel.linux]
 #before-all = "yum install epel-release lz4 lz4-devel -y"

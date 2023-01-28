@@ -100,8 +100,6 @@ jobs:
       matrix:
         os:
         - ubuntu-latest
-        - macOS-latest
-        - windows-latest
         cibw_skip:
         - '*-win32'
         arch:
