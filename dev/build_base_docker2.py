@@ -14,10 +14,12 @@ def argval(clikey, envkey=None, default=ub.NoParam):
     return ub.argval(clikey, default=default)
 
 
-def add_fletch_parts(fletch_version, dpath, parts):
+def make_fletch_parts(fletch_version, dpath, remain):
     fletch_init_commands = []
     fletch_version = 'v1.5.0'
     dpath = ub.Path(ub.get_app_cache_dir('erotemic/manylinux-for/workspace2'))
+
+    fletch_parts = []
 
     USE_STAGING_STRATEGY = False
     if USE_STAGING_STRATEGY:
@@ -28,7 +30,7 @@ def add_fletch_parts(fletch_version, dpath, parts):
             # pre-downloads all the requirements so we can stage them
             ub.cmd('git clone -b @v1.5.0 https://github.com/Kitware/fletch.git', cwd=staging_dpath)
         ub.cmd(f'git checkout {fletch_version}', cwd=fletch_dpath)
-        parts.append(ub.codeblock(
+        fletch_parts.append(ub.codeblock(
             '''
             COPY ./staging/fletch /root/code/fletch
             '''))
@@ -44,12 +46,30 @@ def add_fletch_parts(fletch_version, dpath, parts):
             'mkdir -p /root/code/fletch/build',
             'cd /root/code/fletch/build',
         ])
+
+    cmake_flags = []
+    if 'opencv' in remain:
+        cmake_flags += [
+            '-Dfletch_ENABLE_OpenCV=True',
+            '-DOpenCV_SELECT_VERSION=4.2.0',
+        ]
+        remain.remove('opencv')
+
+    if 'zlib' in remain:
+        cmake_flags += [
+            '-Dfletch_ENABLE_ZLib=True',
+        ]
+        remain.remove('zlib')
+
+    cmake_flags += [
+        '-DCMAKE_BUILD_TYPE=Release'
+    ]
+
+    cmake_flag_text = ' '.join(cmake_flags)
+
     fletch_init_commands.append(ub.codeblock(
-        r'''
-        cmake \
-            -Dfletch_ENABLE_OpenCV=True \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DOpenCV_SELECT_VERSION=4.2.0 ..
+        fr'''
+        cmake {cmake_flag_text} ..
         '''))
     fletch_init_commands.extend([
         'make -j$(getconf _NPROCESSORS_ONLN)',
@@ -57,7 +77,8 @@ def add_fletch_parts(fletch_version, dpath, parts):
         'rm -rf /root/code/fletch',
     ])
     fletch_init_run_command = ub.indent(CMD_SEP.join(fletch_init_commands)).lstrip()
-    parts.append(f'RUN {fletch_init_run_command}')
+    fletch_parts.append(f'RUN {fletch_init_run_command}')
+    return fletch_parts
 
 
 class PackageManager:
@@ -71,13 +92,16 @@ class PackageManager:
         package_manager_maps = {}
         package_manager_maps['yum'] = {
             'lz4': ['lz4-devel'],
+            # 'zlib': ['zlib-devel'],  # The yum version of zlib is too old
             'build': ['gcc', 'gcc-c++', 'make'],
             'fortran': ['gcc-gfortran'],
         }
         package_manager_maps['debian'] = {
+            'zlib': 'zlib1g-dev',  # Not sure if this is too old or not
             'lz4': 'liblz4-dev',
         }
         package_manager_maps['alpine'] = {
+            'zlib': 'zlib-dev',  # Not sure if this is too old or not
             'lz4': 'lz4-dev',
         }
         self.package_manager_maps = package_manager_maps
@@ -202,8 +226,9 @@ def main():
 
     parts += pman.make_install_parts(installable)
 
-    if 'opencv' in remain:
-        add_fletch_parts(fletch_version, dpath, parts)
+    if remain:
+        # Use fletch to get the remaining libs
+        parts += make_fletch_parts(fletch_version, dpath, remain)
 
     if 'gsl' in remain:
         parts.append('RUN ' + CMD_SEP.join([
@@ -286,21 +311,24 @@ if __name__ == '__main__':
         python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux2014 --opencv
         python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux2014 --opencv
 
+        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux2014 --lz4
+        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux2014 --lz4
+
+
+
+        OLD IMAGES
+
         python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux_2_24 --opencv
         python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux_2_24 --opencv
 
         python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=musllinux_1_1 --opencv
         python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=musllinux_1_1 --opencv
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux2014 --lz4
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux2014 --lz4
-
         python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux_2_24 --lz4
         python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux_2_24 --lz4
 
         python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=musllinux_1_1 --lz4
         python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=musllinux_1_1 --lz4
-
 
         python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=musllinux_1_1 --lz4
         python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=musllinux_1_1 --lz4
