@@ -8,6 +8,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 * Reduced dependency surface
+* Added 311 support
 
 
 ## [Version 0.0.1] -
