@@ -40,6 +40,8 @@ jobs:
       matrix:
         os:
         - ubuntu-latest
+        cibw_skip:
+        - pp* cp27-* cp34-* cp35-* cp36-* *-musllinux_*
         arch:
         - auto
     steps:
