@@ -94,33 +94,34 @@ class PackageManager:
         manager_packages = ub.udict(self.package_manager_maps[manager])
         libs = list(ub.flatten(manager_packages.take(installable)))
         parts = []
-        if manager == 'yum':
-            yum_libs_str = ' '.join(libs)
-            yum_parts = [
-                'yum update -y',
-                f'yum install {yum_libs_str} -y',
-                'yum clean all',
-            ]
-            yum_install_cmd = ub.indent(CMD_SEP.join(yum_parts)).lstrip()
-            parts.append(f'RUN {yum_install_cmd}')
-        elif manager == 'apt':
-            apt_libs_str = ' '.join(libs)
-            apt_parts = [
-                'apt-get update',
-                'apt-get install',
-                f'apt-get install {apt_libs_str} -y',
-                'rm -rf /var/lib/apt/lists/*',
-            ]
-            apt_install_cmd = ub.indent(CMD_SEP.join(apt_parts)).lstrip()
-            parts.append(f'RUN {apt_install_cmd}')
-        elif manager == 'apk':
-            apt_libs_str = ' '.join(libs)
-            apt_parts = [
-                f'apk add --update-cache {apt_libs_str}',
-                'rm -rf /var/cache/apk/*',
-            ]
-            apk_install_cmd = ub.indent(CMD_SEP.join(apt_parts)).lstrip()
-            parts.append(f'RUN {apk_install_cmd}')
+        if len(libs):
+            if manager == 'yum':
+                yum_libs_str = ' '.join(libs)
+                yum_parts = [
+                    'yum update -y',
+                    f'yum install {yum_libs_str} -y',
+                    'yum clean all',
+                ]
+                yum_install_cmd = ub.indent(CMD_SEP.join(yum_parts)).lstrip()
+                parts.append(f'RUN {yum_install_cmd}')
+            elif manager == 'apt':
+                apt_libs_str = ' '.join(libs)
+                apt_parts = [
+                    'apt-get update',
+                    'apt-get install',
+                    f'apt-get install {apt_libs_str} -y',
+                    'rm -rf /var/lib/apt/lists/*',
+                ]
+                apt_install_cmd = ub.indent(CMD_SEP.join(apt_parts)).lstrip()
+                parts.append(f'RUN {apt_install_cmd}')
+            elif manager == 'apk':
+                apt_libs_str = ' '.join(libs)
+                apt_parts = [
+                    f'apk add --update-cache {apt_libs_str}',
+                    'rm -rf /var/cache/apk/*',
+                ]
+                apk_install_cmd = ub.indent(CMD_SEP.join(apt_parts)).lstrip()
+                parts.append(f'RUN {apk_install_cmd}')
         return parts
 
 
