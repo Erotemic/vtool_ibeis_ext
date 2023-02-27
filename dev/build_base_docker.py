@@ -1,3 +1,7 @@
+"""
+Construct docker images used for building vtool_ibeis_ext, pyflann_ibeis, and
+pyhesaff.
+"""
 import ubelt as ub
 import os
 
@@ -303,37 +307,39 @@ def main():
 if __name__ == '__main__':
     """
     CommandLine:
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --dry
+        cd ~/code/vtool_ibeis_ext/dev/
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux2014 --build --zlib --fortran --gsl
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux2014 --build --zlib --fortran --gsl
+        python build_base_docker2.py --dry
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux2014 --opencv
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux2014 --opencv
+        python build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux2014 --build --zlib --fortran --gsl
+        python build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux2014 --build --zlib --fortran --gsl
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux2014 --lz4
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux2014 --lz4
+        python build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux2014 --opencv
+        python build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux2014 --opencv
+
+        python build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux2014 --lz4
+        python build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux2014 --lz4
 
 
 
         OLD IMAGES
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux_2_24 --opencv
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux_2_24 --opencv
+        python build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux_2_24 --opencv
+        python build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux_2_24 --opencv
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=musllinux_1_1 --opencv
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=musllinux_1_1 --opencv
+        python build_base_docker2.py --arch=x86_64 --parent_image_prefix=musllinux_1_1 --opencv
+        python build_base_docker2.py --arch=i686 --parent_image_prefix=musllinux_1_1 --opencv
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux_2_24 --lz4
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux_2_24 --lz4
+        python build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux_2_24 --lz4
+        python build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux_2_24 --lz4
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=musllinux_1_1 --lz4
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=musllinux_1_1 --lz4
+        python build_base_docker2.py --arch=x86_64 --parent_image_prefix=musllinux_1_1 --lz4
+        python build_base_docker2.py --arch=i686 --parent_image_prefix=musllinux_1_1 --lz4
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=musllinux_1_1 --lz4
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=musllinux_1_1 --lz4
+        python build_base_docker2.py --arch=x86_64 --parent_image_prefix=musllinux_1_1 --lz4
+        python build_base_docker2.py --arch=i686 --parent_image_prefix=musllinux_1_1 --lz4
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=aarch64 --dry
+        python build_base_docker2.py --arch=aarch64 --dry
 
         # Then to build with CIBW
         pip install cibuildwheel
