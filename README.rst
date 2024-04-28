@@ -4,6 +4,14 @@ The vtool_ibeis_ext Module
 
 |Pypi| |PypiDownloads| |GithubActions| |Codecov|
 
+
++------------------+----------------------------------------------+
+| Github           | https://github.com/Erotemic/vtool_ibeis_ext  |
++------------------+----------------------------------------------+
+| Pypi             | https://pypi.org/project/vtool_ibeis_ext     |
++------------------+----------------------------------------------+
+
+
 Contains the binary spatial verification code used by `vtool_ibeis <https://github.com/Erotemic/vtool_ibeis>`_
 
 This is mainly maintained for the `IBEIS <https://github.com/Erotemic/IBEIS>`_ application.
@@ -13,8 +21,8 @@ Binary packages related to IBEIS:
 * https://github.com/Erotemic/vtool_ibeis_ext
 * https://github.com/Erotemic/pyflann_ibeis
 * https://github.com/Erotemic/pyhesaff
- 
- 
+
+
 .. |Pypi| image:: https://img.shields.io/pypi/v/vtool_ibeis_ext.svg
     :target: https://pypi.python.org/pypi/vtool_ibeis_ext
 
