@@ -302,6 +302,10 @@ def main():
 
             docker tag {OUR_IMAGE_NAME} {OUR_DOCKER_URI}
             docker push {OUR_DOCKER_URI}
+
+            # Note you will likely need to make the image public on quay.io if
+            # you have not done so already
+            # https://quay.io/repository/erotemic/{OUR_IMAGE_BASE}?tab=settings
             '''), 'bash'))
 
 
