@@ -42,6 +42,7 @@ author_email = "erotemic@gmail.com"
 description = "The vtool_ibeis_ext module"
 license = "Apache 2"
 dev_status = "beta"
+linter = false
 
 
 #[tool.cibuildwheel.linux]
