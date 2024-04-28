@@ -168,7 +168,6 @@ def main():
     PARENT_IMAGE_URI = f'{PARENT_QUAY_USER}/{PARENT_IMAGE_NAME}'
 
     OUR_QUAY_USER = 'quay.io/erotemic'
-    OUR_IMAGE_BASE = f'{PARENT_IMAGE_BASE}_for'
 
     included_packages = []
 
@@ -196,7 +195,9 @@ def main():
     # ]
     pkg_suffix = '-'.join(included_packages)
 
-    OUR_IMAGE_TAG = pkg_suffix
+    OUR_IMAGE_BASE = f'{PARENT_IMAGE_BASE}_for_{pkg_suffix}'
+    # OUR_IMAGE_TAG = 'latest'
+    OUR_IMAGE_TAG = ub.timestamp()
     OUR_IMAGE_NAME = f'{OUR_IMAGE_BASE}:{OUR_IMAGE_TAG}'
 
     OUR_DOCKER_URI = f'{OUR_QUAY_USER}/{OUR_IMAGE_NAME}'
