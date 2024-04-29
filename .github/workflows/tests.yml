@@ -31,7 +31,7 @@ jobs:
         os:
         - ubuntu-latest
         cibw_skip:
-        - pp* cp27-* cp34-* cp35-* cp36-* *-musllinux_*
+        - pp* cp27-* cp34-* cp35-* cp36-* *-musllinux_* *i686
         arch:
         - auto
     steps:
