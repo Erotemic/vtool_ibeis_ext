@@ -231,11 +231,6 @@ jobs:
       with:
         name: wheels
         path: wheelhouse
-    - uses: actions/download-artifact@v2.1.1
-      name: Download sdist
-      with:
-        name: sdist_wheels
-        path: wheelhouse
     - name: Show files to upload
       shell: bash
       run: ls -la wheelhouse
@@ -303,11 +298,6 @@ jobs:
       name: Download wheels
       with:
         name: wheels
-        path: wheelhouse
-    - uses: actions/download-artifact@v2.1.1
-      name: Download sdist
-      with:
-        name: sdist_wheels
         path: wheelhouse
     - name: Show files to upload
       shell: bash

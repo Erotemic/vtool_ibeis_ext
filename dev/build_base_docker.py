@@ -305,7 +305,10 @@ def main():
 
             # Note you will likely need to make the image public on quay.io if
             # you have not done so already
-            # https://quay.io/repository/erotemic/{OUR_IMAGE_BASE}?tab=settings
+            echo "
+            Set visibility to public:
+            https://quay.io/repository/erotemic/{OUR_IMAGE_BASE}?tab=settings
+            "
             '''), 'bash'))
 
 

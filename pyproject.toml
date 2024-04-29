@@ -15,7 +15,7 @@ test-extras = [ "tests-strict", "runtime-strict",]
 test-command = "python {project}/run_tests.py"
 
 manylinux-x86_64-image = "quay.io/erotemic/manylinux2014_x86_64_for_opencv:2024-04-28T173711-5"
-#manylinux-i686-image = "quay.io/erotemic/manylinux2014_i686_for:opencv"
+manylinux-i686-image = "quay.io/erotemic/manylinux2014_i686_for_opencv:2024-04-28T191814-5"
 #manylinux-x86_64-image = "manylinux2014"
 #manylinux-i686-image = "manylinux2014"
 #manylinux-aarch64-image = "manylinux2014"
