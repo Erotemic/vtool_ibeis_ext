@@ -2,15 +2,19 @@
 requires = [ "setuptools>=41.0.1", "scikit-build>=0.11.1", "numpy", "ninja>=1.10.2", "cmake>=3.21.2", "cython>=0.29.24",]
 
 [tool.cibuildwheel]
-build = "cp37-* cp38-* cp39-* cp310-* cp311-*"
+
+# TODO: abi3 wheels
+# https://scikit-build-core.readthedocs.io/en/latest/configuration.html
+# https://cibuildwheel.pypa.io/en/stable/faq/#abi3
+
+build = "cp39-* cp310-* cp311-* cp312-* cp313-* cp314-*"
 build-frontend = "build"
-skip = "pp* cp27-* cp34-* cp35-* cp36-* *-musllinux_*"
+skip = "pp* *-musllinux_* *i686"
 build-verbosity = 1
-test-requires = [ "-r requirements/tests.txt",]
+test-extras = [ "tests-strict", "runtime-strict",]
 test-command = "python {project}/run_tests.py"
 
-manylinux-x86_64-image = "quay.io/erotemic/manylinux2014_x86_64_for:opencv"
-manylinux-i686-image = "quay.io/erotemic/manylinux2014_i686_for:opencv"
+manylinux-x86_64-image = "quay.io/pypa/manylinux_2_28_x86_64"
 #manylinux-x86_64-image = "manylinux2014"
 #manylinux-i686-image = "manylinux2014"
 #manylinux-aarch64-image = "manylinux2014"
@@ -35,17 +39,24 @@ repo_name = "vtool_ibeis_ext"
 rel_mod_parent_dpath = "."
 #os = [ "linux", "osx", "win",]
 os = [ "linux" ]
-min_python = 3.7
+min_python = '3.9'
 version = "{mod_dpath}/__init__.py::__version__"
 author = ["Jon Crall", "Avi Weinstock"]
 author_email = "erotemic@gmail.com"
 description = "The vtool_ibeis_ext module"
 license = "Apache 2"
 dev_status = "beta"
+linter = false
 
 
-#[tool.cibuildwheel.linux]
-#before-all = "yum install epel-release lz4 lz4-devel -y"
+[tool.cibuildwheel.linux]
+
+# Work around issue to support older glib toolchain when installing opencv
+before-build = """
+set -eux
+yum -y install epel-release
+yum -y install opencv-devel
+"""
 
 #[tool.cibuildwheel.windows]
 #before-all = "choco install lz4 -y"
@@ -54,8 +65,8 @@ dev_status = "beta"
 #before-all = "brew install lz4"
 
 [tool.pytest.ini_options]
-addopts = "-p no:doctest --xdoctest --xdoctest-style=google --ignore-glob=setup.py"
-norecursedirs = ".git ignore build __pycache__ dev _skbuild"
+addopts = "-p no:doctest --xdoctest --xdoctest-style=google --ignore-glob=setup.py --ignore-glob=docs"
+norecursedirs = ".git ignore build __pycache__ dev _skbuild docs"
 filterwarnings = [ "default", "ignore:.*No cfgstr given in Cacher constructor or call.*:Warning", "ignore:.*Define the __nice__ method for.*:Warning", "ignore:.*private pytest class or function.*:Warning",]
 
 [tool.coverage.run]

@@ -1,3 +1,7 @@
+"""
+Construct docker images used for building vtool_ibeis_ext, pyflann_ibeis, and
+pyhesaff.
+"""
 import ubelt as ub
 import os
 
@@ -164,7 +168,6 @@ def main():
     PARENT_IMAGE_URI = f'{PARENT_QUAY_USER}/{PARENT_IMAGE_NAME}'
 
     OUR_QUAY_USER = 'quay.io/erotemic'
-    OUR_IMAGE_BASE = f'{PARENT_IMAGE_BASE}_for'
 
     included_packages = []
 
@@ -192,7 +195,9 @@ def main():
     # ]
     pkg_suffix = '-'.join(included_packages)
 
-    OUR_IMAGE_TAG = pkg_suffix
+    OUR_IMAGE_BASE = f'{PARENT_IMAGE_BASE}_for_{pkg_suffix}'
+    # OUR_IMAGE_TAG = 'latest'
+    OUR_IMAGE_TAG = ub.timestamp()
     OUR_IMAGE_NAME = f'{OUR_IMAGE_BASE}:{OUR_IMAGE_TAG}'
 
     OUR_DOCKER_URI = f'{OUR_QUAY_USER}/{OUR_IMAGE_NAME}'
@@ -297,43 +302,52 @@ def main():
 
             docker tag {OUR_IMAGE_NAME} {OUR_DOCKER_URI}
             docker push {OUR_DOCKER_URI}
+
+            # Note you will likely need to make the image public on quay.io if
+            # you have not done so already
+            echo "
+            Set visibility to public:
+            https://quay.io/repository/erotemic/{OUR_IMAGE_BASE}?tab=settings
+            "
             '''), 'bash'))
 
 
 if __name__ == '__main__':
     """
     CommandLine:
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --dry
+        cd ~/code/vtool_ibeis_ext/dev/
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux2014 --build --zlib --fortran --gsl
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux2014 --build --zlib --fortran --gsl
+        python build_base_docker.py --dry
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux2014 --opencv
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux2014 --opencv
+        python build_base_docker.py --arch=x86_64 --parent_image_prefix=manylinux2014 --build --zlib --fortran --gsl
+        python build_base_docker.py --arch=i686 --parent_image_prefix=manylinux2014 --build --zlib --fortran --gsl
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux2014 --lz4
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux2014 --lz4
+        python build_base_docker.py --arch=x86_64 --parent_image_prefix=manylinux2014 --opencv
+        python build_base_docker.py --arch=i686 --parent_image_prefix=manylinux2014 --opencv
+
+        python build_base_docker.py --arch=x86_64 --parent_image_prefix=manylinux2014 --lz4
+        python build_base_docker.py --arch=i686 --parent_image_prefix=manylinux2014 --lz4
 
 
 
         OLD IMAGES
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux_2_24 --opencv
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux_2_24 --opencv
+        python build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux_2_24 --opencv
+        python build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux_2_24 --opencv
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=musllinux_1_1 --opencv
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=musllinux_1_1 --opencv
+        python build_base_docker2.py --arch=x86_64 --parent_image_prefix=musllinux_1_1 --opencv
+        python build_base_docker2.py --arch=i686 --parent_image_prefix=musllinux_1_1 --opencv
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux_2_24 --lz4
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux_2_24 --lz4
+        python build_base_docker2.py --arch=x86_64 --parent_image_prefix=manylinux_2_24 --lz4
+        python build_base_docker2.py --arch=i686 --parent_image_prefix=manylinux_2_24 --lz4
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=musllinux_1_1 --lz4
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=musllinux_1_1 --lz4
+        python build_base_docker2.py --arch=x86_64 --parent_image_prefix=musllinux_1_1 --lz4
+        python build_base_docker2.py --arch=i686 --parent_image_prefix=musllinux_1_1 --lz4
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=x86_64 --parent_image_prefix=musllinux_1_1 --lz4
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=i686 --parent_image_prefix=musllinux_1_1 --lz4
+        python build_base_docker2.py --arch=x86_64 --parent_image_prefix=musllinux_1_1 --lz4
+        python build_base_docker2.py --arch=i686 --parent_image_prefix=musllinux_1_1 --lz4
 
-        python ~/code/vtool_ibeis_ext/dev/build_base_docker2.py --arch=aarch64 --dry
+        python build_base_docker2.py --arch=aarch64 --dry
 
         # Then to build with CIBW
         pip install cibuildwheel
