@@ -94,7 +94,7 @@ if len(lib_fname_cand):
         print('multiple libsver candidates: {}'.format(lib_fname_cand))
     lib_fname = lib_fname_cand[0]
 else:
-    raise Exception('cannot find path')
+    raise Exception('Cannot find path to the spatial verification shared library')
     lib_fname = None
 
 
