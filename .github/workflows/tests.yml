@@ -30,6 +30,7 @@ jobs:
         # explicitly here.
         os:
         - ubuntu-latest
+        - windows-latest
         cibw_skip:
         - pp* *-musllinux_* *i686
         arch:
@@ -50,6 +51,7 @@ jobs:
       env:
         CIBW_SKIP: ${{ matrix.cibw_skip }}
         CIBW_ARCHS_LINUX: ${{ matrix.arch }}
+        CIBW_ARCHS_WINDOWS: ${{ matrix.arch }}
         CIBW_ENVIRONMENT: PYTHONUTF8=1
         PYTHONUTF8: '1'
     - name: Show built files
