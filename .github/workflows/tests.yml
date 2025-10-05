@@ -30,6 +30,7 @@ jobs:
         # explicitly here.
         os:
         - ubuntu-latest
+        - windows-latest
         cibw_skip:
         - pp* *-musllinux_* *i686
         arch:
@@ -53,8 +54,16 @@ jobs:
         CIBW_ENVIRONMENT: PYTHONUTF8=1
         PYTHONUTF8: '1'
     - name: Show built files
-      shell: bash
-      run: ls -la wheelhouse
+      shell: python
+      run: |
+        import pathlib
+        wheelhouse = pathlib.Path("wheelhouse")
+        if not wheelhouse.exists():
+            raise SystemExit("wheelhouse directory was not created")
+        print("wheelhouse contents:")
+        for path in sorted(wheelhouse.glob("*")):
+            size = path.stat().st_size
+            print(f"  {path.name} - {size} bytes")
     - name: Set up Python 3.13 to combine coverage
       uses: actions/setup-python@v5.6.0
       if: runner.os == 'Linux'
@@ -142,6 +151,10 @@ jobs:
         - python-version: 3.14.0-rc.1
           install-extras: tests,optional,headless
           os: ubuntu-latest
+          arch: auto
+        - python-version: '3.11'
+          install-extras: tests,optional,headless
+          os: windows-latest
           arch: auto
     steps:
     - name: Checkout source
