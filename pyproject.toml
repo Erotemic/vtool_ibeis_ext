@@ -58,16 +58,17 @@ yum -y install epel-release
 yum -y install opencv-devel
 """
 
+[tool.cibuildwheel.windows.environment]
+VCPKG_DEFAULT_TRIPLET = "x64-windows"
+VCPKG_TARGET_TRIPLET  = "x64-windows"
+VCPKG_ROOT            = "{project}\\vcpkg"
+CMAKE_TOOLCHAIN_FILE  = "{project}\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake"
+OpenCV_DIR            = "{project}\\vcpkg\\installed\\x64-windows\\share\\opencv"
+OpenCV_ROOT           = "{project}\\vcpkg\\installed\\x64-windows"
+PATH                  = "{env:PATH};{project}\\vcpkg\\installed\\x64-windows\\bin"
+
+
 [tool.cibuildwheel.windows]
-environment = {
-    VCPKG_DEFAULT_TRIPLET = "x64-windows",
-    VCPKG_TARGET_TRIPLET = "x64-windows",
-    VCPKG_ROOT = "{project}\\vcpkg",
-    CMAKE_TOOLCHAIN_FILE = "{project}\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
-    OpenCV_DIR = "{project}\\vcpkg\\installed\\x64-windows\\share\\opencv",
-    OpenCV_ROOT = "{project}\\vcpkg\\installed\\x64-windows",
-    PATH = "{env:PATH};{project}\\vcpkg\\installed\\x64-windows\\bin",
-}
 before-build = """
 python -m pip install --upgrade pip delvewheel
 powershell -ExecutionPolicy Bypass -File .\\dev\\setup_windows_opencv.ps1
