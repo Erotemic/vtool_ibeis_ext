@@ -154,6 +154,13 @@ def main():
             '--ignore-glob=*$Recycle.Bin*',
             '--ignore-glob=*System Volume Information*',
         ]
+        if os.name == 'nt':
+            system_drive = os.environ.get('SystemDrive', 'C:')
+            pytest_args.extend([
+                '--ignore=' + os.path.join(system_drive, 'Documents and Settings'),
+                '--ignore=' + os.path.join(system_drive, '$Recycle.Bin'),
+                '--ignore=' + os.path.join(system_drive, 'System Volume Information'),
+            ])
         if is_cibuildwheel():
             pytest_args.append('--cov-append')
 
