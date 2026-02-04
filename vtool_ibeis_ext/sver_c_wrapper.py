@@ -79,22 +79,31 @@ def mats_t(ndim):
 
 dpath = dirname(__file__)
 
+_lib_search_paths = [join(dpath, 'lib'), dpath]
+_lib_basenames = ['libsver', 'sver']
+if ub.WIN32:
+    # Windows builds typically produce sver.dll (no 'lib' prefix)
+    _lib_basenames = ['sver', 'libsver']
 
-lib_fname_cand = list(ub.find_path(
-    name='libsver' + lib_ext,
-    path=[
-        join(dpath, 'lib'),
-        dpath
-    ],
-    exact=False)
-)
+lib_fname_cand = []
+for _base in _lib_basenames:
+    lib_fname_cand.extend(list(ub.find_path(
+        name=_base + lib_ext,
+        path=_lib_search_paths,
+        exact=False)
+    ))
+lib_fname_cand = list(dict.fromkeys(lib_fname_cand))
 
 if len(lib_fname_cand):
     if len(lib_fname_cand) > 1:
         print('multiple libsver candidates: {}'.format(lib_fname_cand))
     lib_fname = lib_fname_cand[0]
 else:
-    raise Exception('cannot find path')
+    raise Exception(
+        'cannot find sver library; tried names={} in paths={}'.format(
+            _lib_basenames, _lib_search_paths
+        )
+    )
     lib_fname = None
 
 
