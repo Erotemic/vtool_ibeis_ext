@@ -110,17 +110,7 @@ jobs:
       shell: bash
       run: |-
         if ls wheelhouse/*.whl >/dev/null 2>&1; then
-          python - <<'PY'
-          import pathlib
-          import zipfile
-
-          wheel = sorted(pathlib.Path("wheelhouse").glob("vtool_ibeis_ext*.whl"))[-1]
-          with zipfile.ZipFile(wheel) as zf:
-            members = [name for name in zf.namelist() if name.endswith("sver.dll")]
-            if members:
-              zf.extract(members[0], path="wheelhouse/_exports")
-              print("Extracted", members[0])
-          PY
+          python -c "import pathlib, zipfile; wheel = sorted(pathlib.Path('wheelhouse').glob('vtool_ibeis_ext*.whl'))[-1]; zf = zipfile.ZipFile(wheel); members = [name for name in zf.namelist() if name.endswith('sver.dll')]; (zf.extract(members[0], path='wheelhouse/_exports'), print('Extracted', members[0])) if members else None; zf.close()"
           if [ -f wheelhouse/_exports/vtool_ibeis_ext/lib/sver.dll ]; then
             dumpbin /EXPORTS wheelhouse/_exports/vtool_ibeis_ext/lib/sver.dll | findstr affine || true
           else
