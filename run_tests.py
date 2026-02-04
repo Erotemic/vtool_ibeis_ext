@@ -144,14 +144,30 @@ def main():
     try:
         import pytest
         pytest_args = [
-            '--cov-config', os.fspath(pyproject_fpath),
-            '--cov-report', 'html',
-            '--cov-report', 'term',
-            '--cov-report', 'xml',
-            '--cov=' + package_name,
-            os.fspath(modpath), os.fspath(test_dir)
+            os.fspath(modpath),
+            os.fspath(test_dir),
+            '--ignore-glob=*Documents and Settings*',
+            '--ignore-glob=*$Recycle.Bin*',
+            '--ignore-glob=*System Volume Information*',
         ]
-        if is_cibuildwheel():
+        if os.name != 'nt':
+            pytest_args = [
+                '--cov-config', os.fspath(pyproject_fpath),
+                '--cov-report', 'html',
+                '--cov-report', 'term',
+                '--cov-report', 'xml',
+                '--cov=' + package_name,
+            ] + pytest_args
+        if os.name == 'nt':
+            from pathlib import Path
+            system_drive = os.environ.get('SystemDrive', 'C:')
+            system_root = Path(system_drive + '\\')
+            pytest_args.extend([
+                '--ignore=' + str(system_root / 'Documents and Settings'),
+                '--ignore=' + str(system_root / '$Recycle.Bin'),
+                '--ignore=' + str(system_root / 'System Volume Information'),
+            ])
+        if is_cibuildwheel() and os.name != 'nt':
             pytest_args.append('--cov-append')
 
         pytest_args = pytest_args + sys.argv[1:]

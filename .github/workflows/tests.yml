@@ -30,6 +30,7 @@ jobs:
         # explicitly here.
         os:
         - ubuntu-latest
+        - windows-latest
         cibw_skip:
         - pp* *-musllinux_* *i686
         arch:
@@ -42,6 +43,41 @@ jobs:
       if: runner.os == 'Linux' && matrix.arch != 'auto'
       with:
         platforms: all
+    - name: Set vcpkg cache paths (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |-
+        "VCPKG_ARCHIVES_DIR=$env:LOCALAPPDATA\\vcpkg\\archives" >> $env:GITHUB_ENV
+        "VCPKG_DOWNLOADS_DIR=C:\\vcpkg\\downloads" >> $env:GITHUB_ENV
+        New-Item -ItemType Directory -Force -Path "$env:LOCALAPPDATA\\vcpkg\\archives" | Out-Null
+        New-Item -ItemType Directory -Force -Path "C:\\vcpkg\\downloads" | Out-Null
+    - name: Restore vcpkg caches (Windows)
+      if: runner.os == 'Windows'
+      id: vcpkg-cache
+      uses: actions/cache/restore@v4
+      with:
+        path: |-
+          ${{ env.VCPKG_ARCHIVES_DIR }}
+          ${{ env.VCPKG_DOWNLOADS_DIR }}
+        key: vcpkg-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'CMakeLists.txt', 'setup.py') }}
+        restore-keys: |
+          vcpkg-${{ runner.os }}-
+    - name: Check dumpbin availability (Windows)
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |-
+        where dumpbin || true
+        dumpbin /? || true
+    - name: Install OpenCV via vcpkg (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |-
+        if (-not (Test-Path "C:\\vcpkg")) {
+          git clone https://github.com/microsoft/vcpkg C:\vcpkg
+        }
+        Set-Location C:\vcpkg
+        .\bootstrap-vcpkg.bat -disableMetrics
+        .\vcpkg.exe install opencv4:x64-windows
     - name: Build binary wheels
       uses: pypa/cibuildwheel@v3.1.2
       with:
@@ -50,8 +86,47 @@ jobs:
       env:
         CIBW_SKIP: ${{ matrix.cibw_skip }}
         CIBW_ARCHS_LINUX: ${{ matrix.arch }}
-        CIBW_ENVIRONMENT: PYTHONUTF8=1
+        CIBW_ARCHS_WINDOWS: AMD64
+        CIBW_ENVIRONMENT_WINDOWS: |
+          VCPKG_ROOT=C:/vcpkg
+          VCPKG_TARGET_TRIPLET=x64-windows
+          OpenCV_DIR=C:/vcpkg/installed/x64-windows/share/opencv4
+          OpenCV_ROOT=C:/vcpkg/installed/x64-windows
+          CMAKE_PREFIX_PATH=C:/vcpkg/installed/x64-windows
+          CMAKE_ARGS=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake;-DOpenCV_DIR=C:/vcpkg/installed/x64-windows/share/opencv4
+          VCPKG_DOWNLOADS=C:/vcpkg/downloads
+          PATH=C:/vcpkg/installed/x64-windows/bin;{PATH}
         PYTHONUTF8: '1'
+        VCPKG_ROOT: C:\vcpkg
+        VCPKG_TARGET_TRIPLET: x64-windows
+    - name: Show cibuildwheel Windows env (Windows)
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |-
+        echo "CIBW_ENVIRONMENT_WINDOWS:"
+        printf '%s\n' "$CIBW_ENVIRONMENT_WINDOWS"
+    - name: Dump sver.dll exports (Windows)
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |-
+        if ls wheelhouse/*.whl >/dev/null 2>&1; then
+          python -c "import pathlib, zipfile; wheel = sorted(pathlib.Path('wheelhouse').glob('vtool_ibeis_ext*.whl'))[-1]; zf = zipfile.ZipFile(wheel); members = [name for name in zf.namelist() if name.endswith('sver.dll')]; (zf.extract(members[0], path='wheelhouse/_exports'), print('Extracted', members[0])) if members else None; zf.close()"
+          if [ -f wheelhouse/_exports/vtool_ibeis_ext/lib/sver.dll ]; then
+            dumpbin /EXPORTS wheelhouse/_exports/vtool_ibeis_ext/lib/sver.dll | findstr affine || true
+          else
+            echo "sver.dll not found in wheelhouse for export dump."
+          fi
+        else
+          echo "No wheels found in wheelhouse; skipping export dump."
+        fi
+    - name: Save vcpkg cache (Windows)
+      if: runner.os == 'Windows' && always()
+      uses: actions/cache/save@v4
+      with:
+        path: |-
+          ${{ env.VCPKG_ARCHIVES_DIR }}
+          ${{ env.VCPKG_DOWNLOADS_DIR }}
+        key: ${{ steps.vcpkg-cache.outputs.cache-primary-key }}
     - name: Show built files
       shell: bash
       run: ls -la wheelhouse
@@ -115,33 +190,65 @@ jobs:
           install-extras: tests-strict,runtime-strict,headless-strict
           os: ubuntu-latest
           arch: auto
+        - python-version: '3.9'
+          install-extras: tests-strict,runtime-strict,headless-strict
+          os: windows-latest
+          arch: auto
         - python-version: '3.13'
           install-extras: tests-strict,runtime-strict,optional-strict,headless-strict
           os: ubuntu-latest
+          arch: auto
+        - python-version: '3.13'
+          install-extras: tests-strict,runtime-strict,optional-strict,headless-strict
+          os: windows-latest
           arch: auto
         - python-version: '3.9'
           install-extras: tests,optional,headless
           os: ubuntu-latest
           arch: auto
+        - python-version: '3.9'
+          install-extras: tests,optional,headless
+          os: windows-latest
+          arch: auto
         - python-version: '3.10'
           install-extras: tests,optional,headless
           os: ubuntu-latest
+          arch: auto
+        - python-version: '3.10'
+          install-extras: tests,optional,headless
+          os: windows-latest
           arch: auto
         - python-version: '3.11'
           install-extras: tests,optional,headless
           os: ubuntu-latest
           arch: auto
+        - python-version: '3.11'
+          install-extras: tests,optional,headless
+          os: windows-latest
+          arch: auto
         - python-version: '3.12'
           install-extras: tests,optional,headless
           os: ubuntu-latest
+          arch: auto
+        - python-version: '3.12'
+          install-extras: tests,optional,headless
+          os: windows-latest
           arch: auto
         - python-version: '3.13'
           install-extras: tests,optional,headless
           os: ubuntu-latest
           arch: auto
-        - python-version: 3.14.0-rc.1
+        - python-version: '3.13'
+          install-extras: tests,optional,headless
+          os: windows-latest
+          arch: auto
+        - python-version: '3.14'
           install-extras: tests,optional,headless
           os: ubuntu-latest
+          arch: auto
+        - python-version: '3.14'
+          install-extras: tests,optional,headless
+          os: windows-latest
           arch: auto
     steps:
     - name: Checkout source
@@ -172,14 +279,30 @@ jobs:
         python -m pip install pip uv -U
         echo "Installing helpers: setuptools"
         python -m uv pip install setuptools>=0.8 setuptools_scm wheel build -U
-        echo "Installing helpers: tomli and pkginfo"
-        python -m uv pip install tomli pkginfo
+        echo "Installing helpers: tomli, packaging, and pkginfo"
+        python -m uv pip install tomli pkginfo packaging
         export WHEEL_FPATH=$(python -c "if 1:
             import pathlib
+            from packaging import tags
+            from packaging.utils import parse_wheel_filename
             dist_dpath = pathlib.Path('wheelhouse')
-            candidates = list(dist_dpath.glob('vtool_ibeis_ext*.whl'))
-            candidates += list(dist_dpath.glob('vtool_ibeis_ext*.tar.gz'))
-            fpath = sorted(candidates)[-1]
+            candidates = sorted(dist_dpath.glob('vtool_ibeis_ext*.whl'))
+            if not candidates:
+                sdists = sorted(dist_dpath.glob('vtool_ibeis_ext*.tar.gz'))
+                if not sdists:
+                    raise SystemExit('No wheel artifacts found')
+                fpath = sdists[-1]
+            else:
+                sys_tags = set(tags.sys_tags())
+                matching = []
+                for wheel in candidates:
+                    try:
+                        _, _, _, wheel_tags = parse_wheel_filename(wheel.name)
+                    except Exception:
+                        continue
+                    if any(tag in sys_tags for tag in wheel_tags):
+                        matching.append(wheel)
+                fpath = sorted(matching or candidates)[-1]
             print(str(fpath).replace(chr(92), chr(47)))
         ")
         export MOD_VERSION=$(python -c "if 1:
@@ -196,6 +319,44 @@ jobs:
         echo "MOD_VERSION=$MOD_VERSION"
         python -m uv pip install --prerelease=allow "vtool_ibeis_ext[$INSTALL_EXTRAS]==$MOD_VERSION" -f wheelhouse
         echo "Install finished."
+    - name: Smoke test wheel on Windows
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |-
+        python - <<'PY'
+        import os
+        import pathlib
+        import sys
+        workspace = os.environ.get("GITHUB_WORKSPACE")
+        if workspace:
+          workspace_path = pathlib.Path(workspace).resolve()
+          sys.path = [
+            entry for entry in sys.path
+            if not entry
+            or not pathlib.Path(entry).resolve().is_relative_to(workspace_path)
+          ]
+        import vtool_ibeis_ext as mod
+        print("vtool_ibeis_ext:", mod.__file__)
+        try:
+          import vtool_ibeis_ext.sver_c_wrapper as sver
+          print("sver_c_wrapper:", sver.__file__)
+        except Exception as exc:
+          print("Failed to import sver_c_wrapper:", exc)
+          raise
+        PY
+    - name: Windows wheel diagnostics
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |-
+        python - <<'PY'
+        import pathlib
+        import vtool_ibeis_ext
+        module_path = pathlib.Path(vtool_ibeis_ext.__file__).resolve()
+        print("Module path:", module_path)
+        print("Contents of module dir:")
+        for item in module_path.parent.iterdir():
+          print(" -", item.name)
+        PY
     - name: Test wheel ${{ matrix.install-extras }}
       shell: bash
       env:
