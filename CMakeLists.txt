@@ -121,4 +121,8 @@ target_link_libraries(sver PRIVATE ${OpenCV_LIBRARIES})
 # Note: if the target is not referenced by package_data in setup.py then the
 # lib will be installed as a data file and not a package file.
 #install(TARGETS sver LIBRARY DESTINATION "vtool_ibeis_ext")
-install(TARGETS sver DESTINATION vtool_ibeis_ext/lib)
+install(TARGETS sver
+    RUNTIME DESTINATION vtool_ibeis_ext/lib
+    LIBRARY DESTINATION vtool_ibeis_ext/lib
+    ARCHIVE DESTINATION vtool_ibeis_ext/lib
+)
