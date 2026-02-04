@@ -22,10 +22,11 @@ indices into kpts{1,2} indicating a match
 #include <iostream>
 
 
-//#if WIN32
-//typedef unsigned __int64 size_t;
-//#else
-//#endif
+#if defined(_WIN32)
+#define SVER_API __declspec(dllexport)
+#else
+#define SVER_API
+#endif
 
 #define DEBUG_SVER 0
 #if DEBUG_SVER
@@ -152,7 +153,7 @@ template<typename T> inline Matx<T, 3, 3> get_Aff_mat(const Matx<T, 3, 3>& invVR
 }
 
 extern "C" {
-    void get_affine_inliers(double* kpts1, size_t kpts1_len,
+    SVER_API void get_affine_inliers(double* kpts1, size_t kpts1_len,
                             double* kpts2, size_t kpts2_len,
                             size_t* fm, double* fs, size_t nMatch,
                             double xy_thresh_sqrd, double scale_thresh_sqrd, double ori_thresh,
@@ -267,7 +268,7 @@ Matx<double, 3, 3> prefix##invVR2_m = get_invV_mat( \
         */
     }
 
-    int get_best_affine_inliers(double* kpts1, size_t kpts1_len,
+    SVER_API int get_best_affine_inliers(double* kpts1, size_t kpts1_len,
                                 double* kpts2, size_t kpts2_len,
                                 size_t* fm, double* fs, size_t nMatch,
                                 double xy_thresh_sqrd, double scale_thresh_sqrd, double ori_thresh,

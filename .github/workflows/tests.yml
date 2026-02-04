@@ -105,6 +105,30 @@ jobs:
       run: |-
         echo "CIBW_ENVIRONMENT_WINDOWS:"
         printf '%s\n' "$CIBW_ENVIRONMENT_WINDOWS"
+    - name: Dump sver.dll exports (Windows)
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |-
+        if ls wheelhouse/*.whl >/dev/null 2>&1; then
+          python - <<'PY'
+          import pathlib
+          import zipfile
+
+          wheel = sorted(pathlib.Path("wheelhouse").glob("vtool_ibeis_ext*.whl"))[-1]
+          with zipfile.ZipFile(wheel) as zf:
+            members = [name for name in zf.namelist() if name.endswith("sver.dll")]
+            if members:
+              zf.extract(members[0], path="wheelhouse/_exports")
+              print("Extracted", members[0])
+          PY
+          if [ -f wheelhouse/_exports/vtool_ibeis_ext/lib/sver.dll ]; then
+            dumpbin /EXPORTS wheelhouse/_exports/vtool_ibeis_ext/lib/sver.dll | findstr affine || true
+          else
+            echo "sver.dll not found in wheelhouse for export dump."
+          fi
+        else
+          echo "No wheels found in wheelhouse; skipping export dump."
+        fi
     - name: Save vcpkg cache (Windows)
       if: runner.os == 'Windows' && always()
       uses: actions/cache/save@v4

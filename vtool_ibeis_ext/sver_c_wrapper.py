@@ -55,8 +55,7 @@ c_double_p = C.POINTER(C.c_double)
 
 # copied/adapted from _pyhesaff.py
 kpts_dtype = np.float64
-# this is because size_t is 32 bit on mingw even on 64 bit machines
-fm_dtype = np.int32 if ub.WIN32 else np.int64
+fm_dtype = np.int64 if C.sizeof(C.c_size_t) == 8 else np.int32
 fs_dtype = np.float64
 FLAGS_RW = 'aligned, c_contiguous, writeable'
 FLAGS_RO = 'aligned, c_contiguous'
