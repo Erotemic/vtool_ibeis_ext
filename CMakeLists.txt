@@ -58,6 +58,41 @@ endif()
 # OpenCV_ROOT_DIR=$HOME/.local
 # OpenCV_ROOT_DIR=$HOME/.local python setup.py develop
 #set(OpenCV_FIND_REQUIRED_COMPONENTS)
+# ---- Robust OpenCV discovery (env + vcpkg) ----
+if(DEFINED ENV{OpenCV_DIR} AND NOT OpenCV_DIR)
+    set(OpenCV_DIR "$ENV{OpenCV_DIR}")
+endif()
+if(DEFINED ENV{OpenCV_ROOT} AND NOT OpenCV_ROOT)
+    set(OpenCV_ROOT "$ENV{OpenCV_ROOT}")
+endif()
+if(DEFINED ENV{OpenCV_ROOT_DIR} AND NOT OpenCV_ROOT_DIR)
+    set(OpenCV_ROOT_DIR "$ENV{OpenCV_ROOT_DIR}")
+endif()
+
+if(DEFINED ENV{VCPKG_ROOT} AND NOT OpenCV_DIR)
+    if(DEFINED ENV{VCPKG_TARGET_TRIPLET})
+        set(_vcpkg_triplet "$ENV{VCPKG_TARGET_TRIPLET}")
+    elseif(WIN32)
+        if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+            set(_vcpkg_triplet "x64-windows")
+        else()
+            set(_vcpkg_triplet "x86-windows")
+        endif()
+    endif()
+
+    if(_vcpkg_triplet)
+        set(_vcpkg_opencv_dir "$ENV{VCPKG_ROOT}/installed/${_vcpkg_triplet}/share/opencv4")
+        set(OpenCV_DIR "${_vcpkg_opencv_dir}")
+        if(NOT OpenCV_ROOT)
+            set(OpenCV_ROOT "$ENV{VCPKG_ROOT}/installed/${_vcpkg_triplet}")
+        endif()
+    endif()
+endif()
+
+if(OpenCV_ROOT AND NOT CMAKE_PREFIX_PATH)
+    set(CMAKE_PREFIX_PATH "${OpenCV_ROOT}")
+endif()
+# ---- End robust OpenCV discovery ----
 find_package( OpenCV REQUIRED )
 IF(OpenCV_FOUND)
   message(STATUS "Found OpenCV! ^_^")
@@ -100,6 +135,10 @@ message(STATUS "OpenMP_SHARED_LINKER_FLAGS = ${OpenMP_SHARED_LINKER_FLAGS}")
 message(STATUS "OpenMP_EXE_LINKER_FLAGS = ${OpenMP_EXE_LINKER_FLAGS}")
 message(STATUS "OpenCV_INCLUDE_DIR = ${OpenCV_INCLUDE_DIR}")
 message(STATUS "OpenCV_LIBRARIES = ${OpenCV_LIBRARIES}")
+set(_opencv_includes "${OpenCV_INCLUDE_DIRS}")
+if(NOT _opencv_includes)
+    set(_opencv_includes "${OpenCV_INCLUDE_DIR}")
+endif()
 
 # Use MODULE instead of SHARED for windows
 add_library(sver MODULE ${SOURCE_FILES})
@@ -112,7 +151,7 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 #    target_compile_definitions(sver PRIVATE HESAFF_WIN_EXPORT)
 #endif()
 
-target_include_directories(sver PRIVATE ${OpenCV_INCLUDE_DIR})
+target_include_directories(sver PRIVATE ${_opencv_includes})
 
 #######################################
 target_link_libraries(sver PRIVATE ${OpenCV_LIBRARIES})
