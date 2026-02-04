@@ -1,0 +1,12 @@
+[package]
+name = "vtool_ibeis_ext"
+version = "0.2.0"
+edition = "2021"
+
+[lib]
+name = "_sver"
+crate-type = ["cdylib"]
+
+[dependencies]
+numpy = "0.21"
+pyo3 = { version = "0.21", features = ["extension-module", "abi3-py39"] }

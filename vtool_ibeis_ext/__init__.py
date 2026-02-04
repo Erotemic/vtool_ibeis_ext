@@ -1,8 +1,12 @@
-__version__ = '0.1.4'
-__author__ = 'Jon Crall'
-__author_email__ = 'erotemic@gmail.com'
-__url__ = 'https://github.com/Erotemic/vtool_ibeis_ext'
+"""Rust-backed spatial verification helpers."""
 
-__mkinit__ = """
-mkinit -m vtool_ibeis_ext
-"""
+from __future__ import annotations
+
+__version__ = "0.2.0"
+__author__ = "Jon Crall"
+__author_email__ = "erotemic@gmail.com"
+__url__ = "https://github.com/Erotemic/vtool_ibeis_ext"
+
+__all__ = ["__version__", "sver_c_wrapper", "sver"]
+
+from . import sver_c_wrapper, sver  # noqa: E402
