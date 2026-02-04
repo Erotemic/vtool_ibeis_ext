@@ -70,7 +70,7 @@ repair-wheel-command = "python -m pip install delvewheel && delvewheel repair -w
 
 [tool.pytest.ini_options]
 addopts = "-p no:doctest --xdoctest --xdoctest-style=google --ignore-glob=setup.py --ignore-glob=docs"
-norecursedirs = ".git ignore build __pycache__ dev _skbuild docs"
+norecursedirs = ".* build dist _skbuild .eggs .git venv* __pycache__ dev docs *Documents and Settings* *$Recycle.Bin* *System Volume Information*"
 filterwarnings = [ "default", "ignore:.*No cfgstr given in Cacher constructor or call.*:Warning", "ignore:.*Define the __nice__ method for.*:Warning", "ignore:.*private pytest class or function.*:Warning",]
 
 [tool.coverage.run]

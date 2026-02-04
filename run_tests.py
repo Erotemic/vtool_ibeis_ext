@@ -149,7 +149,10 @@ def main():
             '--cov-report', 'term',
             '--cov-report', 'xml',
             '--cov=' + package_name,
-            os.fspath(modpath), os.fspath(test_dir)
+            os.fspath(modpath), os.fspath(test_dir),
+            '--ignore-glob=*Documents and Settings*',
+            '--ignore-glob=*$Recycle.Bin*',
+            '--ignore-glob=*System Volume Information*',
         ]
         if is_cibuildwheel():
             pytest_args.append('--cov-append')
