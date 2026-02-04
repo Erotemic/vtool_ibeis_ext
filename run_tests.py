@@ -155,11 +155,13 @@ def main():
             '--ignore-glob=*System Volume Information*',
         ]
         if os.name == 'nt':
+            from pathlib import Path
             system_drive = os.environ.get('SystemDrive', 'C:')
+            system_root = Path(system_drive + '\\')
             pytest_args.extend([
-                '--ignore=' + os.path.join(system_drive, 'Documents and Settings'),
-                '--ignore=' + os.path.join(system_drive, '$Recycle.Bin'),
-                '--ignore=' + os.path.join(system_drive, 'System Volume Information'),
+                '--ignore=' + str(system_root / 'Documents and Settings'),
+                '--ignore=' + str(system_root / '$Recycle.Bin'),
+                '--ignore=' + str(system_root / 'System Volume Information'),
             ])
         if is_cibuildwheel():
             pytest_args.append('--cov-append')
