@@ -16,6 +16,7 @@ indices into kpts{1,2} indicating a match
 */
 #include <cmath>
 #include <cstdio>
+#include <cstddef>
 #include <opencv2/core/core.hpp>
 #include <vector>
 #include <iostream>
@@ -300,14 +301,16 @@ Matx<double, 3, 3> prefix##invVR2_m = get_invV_mat( \
 
         {
             //(max : max_val)
+            const ptrdiff_t nmatch2 = static_cast<ptrdiff_t>(nMatch) * 2;
             #pragma omp parallel for if(parallel_flag)
-            for(size_t i1 = 0; i1 < nMatch * 2; i1 += 2)
+            for(ptrdiff_t i1 = 0; i1 < nmatch2; i1 += 2)
             {
+                size_t i1_u = static_cast<size_t>(i1);
                 #ifdef USE_PAR_SVER
                 bool* tmp_inliers = new bool[num_matches];
                 double* tmp_errors = new double[num_matches * 3];
                 #endif
-                SETUP_invVRs(i1, i1_)
+                SETUP_invVRs(i1_u, i1_)
                     Matx<double, 3, 3> Aff_mat = get_Aff_mat(i1_invVR1_m, i1_invVR2_m);
                 double inlier_weight_for_i1 = 0;
                 for(size_t i2 = 0; i2 < nMatch * 2; i2 += 2)
@@ -332,7 +335,7 @@ Matx<double, 3, 3> prefix##invVR2_m = get_invV_mat( \
                     if(inlier_weight_for_i1 >= current_max_inlier_weight)
                     {
                         printDBG_SVER(" * inlier_weight_for_i1 = " << inlier_weight_for_i1);
-                        printDBG_SVER(" * i1 = " << i1);
+                        printDBG_SVER(" * i1 = " << i1_u);
                         printDBG_SVER(" * current_max_inlier_weight = " << current_max_inlier_weight);
                         current_max_inlier_weight = inlier_weight_for_i1;
                         // reuse the output space for the current maximum (since
