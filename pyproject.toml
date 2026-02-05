@@ -1,81 +1,54 @@
 [build-system]
-requires = [ "setuptools>=41.0.1", "scikit-build>=0.11.1", "numpy", "ninja>=1.10.2", "cmake>=3.21.2", "cython>=0.29.24",]
+requires = ["maturin>=1.5", "numpy>=1.21"]
+build-backend = "maturin"
+
+[project]
+name = "vtool_ibeis_ext"
+version = "0.2.0"
+description = "Rust-backed spatial verification helpers for vtool_ibeis_ext"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [
+  { name = "Jon Crall", email = "erotemic@gmail.com" },
+  { name = "Avi Weinstock" },
+]
+keywords = ["computer-vision", "spatial-verification", "affine", "rust"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Rust",
+]
+dependencies = ["numpy>=1.21"]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0", "numpy>=1.21", "xdoctest>=1.1", "pytest-cov>=4.0"]
+tests = ["pytest>=7.0", "numpy>=1.21", "xdoctest>=1.1", "pytest-cov>=4.0"]
+optional = []
+headless = []
+
+[tool.maturin]
+module-name = "vtool_ibeis_ext._sver"
+features = ["pyo3/extension-module"]
 
 [tool.cibuildwheel]
-
-# TODO: abi3 wheels
-# https://scikit-build-core.readthedocs.io/en/latest/configuration.html
-# https://cibuildwheel.pypa.io/en/stable/faq/#abi3
-
-build = "cp39-* cp310-* cp311-* cp312-* cp313-* cp314-*"
-build-frontend = "build"
+build = "cp39-*"
 skip = "pp* *-musllinux_* *i686"
 build-verbosity = 1
-test-extras = [ "tests-strict", "runtime-strict",]
-test-command = "python {project}/run_tests.py"
-
-manylinux-x86_64-image = "quay.io/pypa/manylinux_2_28_x86_64"
-#manylinux-x86_64-image = "manylinux2014"
-#manylinux-i686-image = "manylinux2014"
-#manylinux-aarch64-image = "manylinux2014"
-#manylinux-ppc64le-image = "manylinux2014"
-#manylinux-s390x-image = "manylinux2014"
-#manylinux-pypy_x86_64-image = "manylinux2014"
-#manylinux-pypy_i686-image = "manylinux2014"
-#manylinux-pypy_aarch64-image = "manylinux2014"
-#musllinux-x86_64-image = "musllinux_1_1"
-#musllinux-i686-image = "musllinux_1_1"
-#musllinux-aarch64-image = "musllinux_1_1"
-#musllinux-ppc64le-image = "musllinux_1_1"
-#musllinux-s390x-image = "musllinux_1_1"
-
-[tool.mypy]
-ignore_missing_imports = true
-
-[tool.xcookie]
-tags = [ "github", "binpy", "erotemic", "cv2", "nosrcdist"]
-mod_name = "vtool_ibeis_ext"
-repo_name = "vtool_ibeis_ext"
-rel_mod_parent_dpath = "."
-#os = [ "linux", "osx", "win",]
-os = [ "linux" ]
-min_python = '3.9'
-version = "{mod_dpath}/__init__.py::__version__"
-author = ["Jon Crall", "Avi Weinstock"]
-author_email = "erotemic@gmail.com"
-description = "The vtool_ibeis_ext module"
-license = "Apache 2"
-dev_status = "beta"
-linter = false
-
+test-command = "python -m pytest -q {project}/tests"
+test-requires = ["pytest>=7.0", "numpy>=1.21", "xdoctest>=1.1", "pytest-cov>=4.0"]
 
 [tool.cibuildwheel.linux]
+before-all = "curl -sSf https://sh.rustup.rs | sh -s -- -y && source $HOME/.cargo/env && rustup show"
 
-# Work around issue to support older glib toolchain when installing opencv
-before-build = """
-set -eux
-yum -y install epel-release
-yum -y install opencv-devel
-"""
-
-[tool.cibuildwheel.windows]
-before-all = "vcpkg install opencv4:x64-windows"
-repair-wheel-command = "python -m pip install delvewheel && delvewheel repair -w {dest_dir} {wheel} --add-path C:/vcpkg/installed/x64-windows/bin"
-
-#[tool.cibuildwheel.windows]
-#before-all = "choco install lz4 -y"
-
-#[tool.cibuildwheel.macos]
-#before-all = "brew install lz4"
+environment = { PATH = "$HOME/.cargo/bin:$PATH" }
 
 [tool.pytest.ini_options]
-addopts = "-p no:doctest --xdoctest --xdoctest-style=google --ignore-glob=setup.py --ignore-glob=docs"
-norecursedirs = ".* build dist _skbuild .eggs .git venv* __pycache__ dev docs *Documents and Settings* *$Recycle.Bin* *System Volume Information*"
-filterwarnings = [ "default", "ignore:.*No cfgstr given in Cacher constructor or call.*:Warning", "ignore:.*Define the __nice__ method for.*:Warning", "ignore:.*private pytest class or function.*:Warning",]
-
-[tool.coverage.run]
-branch = true
-
-[tool.coverage.report]
-exclude_lines = [ "pragma: no cover", ".*  # pragma: no cover", ".*  # nocover", "def __repr__", "raise AssertionError", "raise NotImplementedError", "if 0:", "if trace is not None", "verbose = .*", "^ *raise", "^ *pass *$", "if _debug:", "if __name__ == .__main__.:", ".*if six.PY2:",]
-omit = [ "vtool_ibeis_ext/__main__.py", "*/setup.py",]
+addopts = ""
