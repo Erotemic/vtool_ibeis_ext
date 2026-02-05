@@ -23,8 +23,9 @@ jobs:
         env:
           CIBW_BUILD: "cp39-*"
           CIBW_SKIP: "pp* *-musllinux_* *i686"
-          CIBW_TEST_COMMAND: "python -m pytest -q {project}/tests"
+          CIBW_TEST_COMMAND: "python -m pytest -q"
           CIBW_TEST_REQUIRES: "pytest>=7.0 numpy>=1.21"
+          CIBW_TEST_SOURCES: "tests"
       - uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.os }}

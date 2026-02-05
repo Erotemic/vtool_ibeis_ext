@@ -7,6 +7,4 @@ __author__ = "Jon Crall"
 __author_email__ = "erotemic@gmail.com"
 __url__ = "https://github.com/Erotemic/vtool_ibeis_ext"
 
-__all__ = ["__version__", "sver_c_wrapper", "sver"]
-
-from . import sver_c_wrapper, sver  # noqa: E402
+__all__ = ["__version__"]
