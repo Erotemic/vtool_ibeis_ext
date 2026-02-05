@@ -29,7 +29,12 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install maturin
           python -m maturin build -o wheelhouse
-          ls -al wheelhouse
+          python - <<'PY'
+          import pathlib
+          print('wheelhouse contents:')
+          for item in sorted(pathlib.Path('wheelhouse').glob('*')):
+              print(' -', item)
+          PY
 
       - name: Upload wheels artifact
         uses: actions/upload-artifact@v4
