@@ -3,15 +3,13 @@ name: Build wheels
 on:
   push:
   pull_request:
-  release:
-    types: [published]
 
 jobs:
   build-wheels:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
