@@ -1,4 +1,6 @@
 include README.md
+include CHANGELOG.md
+include README.rst
 include pyproject.toml
 include Cargo.toml
 include rust-toolchain.toml

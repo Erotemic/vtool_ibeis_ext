@@ -6,8 +6,12 @@ on:
 
 jobs:
   build_binpy_wheels:
-    name: build wheel (ubuntu, py3.9)
-    runs-on: ubuntu-latest
+    name: build wheel (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -30,14 +34,18 @@ jobs:
       - name: Upload wheels artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-ubuntu-latest-auto
+          name: wheels-${{ matrix.os }}-auto
           path: wheelhouse/vtool_ibeis_ext*.whl
 
   test_binpy_wheels:
-    name: test wheel (ubuntu, py3.9)
-    runs-on: ubuntu-latest
-    needs:
-      - build_binpy_wheels
+    name: test ${{ matrix.os }} / py${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    needs: [build_binpy_wheels]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -45,7 +53,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
+          python-version: ${{ matrix.python-version }}
 
       - name: Download wheels
         uses: actions/download-artifact@v4
@@ -63,30 +71,52 @@ jobs:
           wheels = sorted(pathlib.Path('wheelhouse').glob('vtool_ibeis_ext*.whl'))
           if not wheels:
               raise SystemExit('No wheel artifacts found in wheelhouse')
-          print('Selected wheel:', wheels[-1])
+          print('Available wheels:')
+          for wheel in wheels:
+              print(' -', wheel)
           PY
-          python -m pip install --force-reinstall wheelhouse/vtool_ibeis_ext*.whl
+          python -m pip install --force-reinstall vtool_ibeis_ext==1.0.0 -f wheelhouse
 
       - name: Diagnostics
         run: |
-          DIAG_SANDBOX="$(mktemp -d)"
-          cd "$DIAG_SANDBOX"
           python - <<'PY'
-          import sys
           import os
-          workspace = os.environ.get('GITHUB_WORKSPACE', '')
-          sys.path = [p for p in sys.path if workspace not in os.path.abspath(p)]
+          import sys
           import vtool_ibeis_ext
           import vtool_ibeis_ext._sver as _sver
           print('Python:', sys.version)
-          print('sys.path[0]:', sys.path[0])
+          print('Workspace:', os.environ.get('GITHUB_WORKSPACE'))
           print('Package path:', vtool_ibeis_ext.__file__)
           print('Extension path:', _sver.__file__)
           PY
 
       - name: Run tests in sandbox
         run: |
-          TEST_SANDBOX="$(mktemp -d)"
-          cp -r tests "$TEST_SANDBOX/tests"
-          cd "$TEST_SANDBOX"
-          python -m pytest --verbose -p pytester -p no:doctest --xdoctest --cov-config ${GITHUB_WORKSPACE}/pyproject.toml --cov-report term --durations=100 --cov=vtool_ibeis_ext tests
+          python - <<'PY'
+          import os
+          import shutil
+          import tempfile
+          import pathlib
+          import subprocess
+          import sys
+
+          workspace = pathlib.Path(os.environ['GITHUB_WORKSPACE'])
+          sandbox = pathlib.Path(tempfile.mkdtemp(prefix='vtool-tests-'))
+          shutil.copytree(workspace / 'tests', sandbox / 'tests')
+          cmd = [
+              sys.executable,
+              '-m', 'pytest',
+              '--verbose',
+              '-p', 'pytester',
+              '-p', 'no:doctest',
+              '--xdoctest',
+              '--cov-config', str(workspace / 'pyproject.toml'),
+              '--cov-report', 'term',
+              '--durations=100',
+              '--cov=vtool_ibeis_ext',
+              'tests',
+          ]
+          print('Sandbox:', sandbox)
+          print('Running:', ' '.join(cmd))
+          subprocess.check_call(cmd, cwd=sandbox)
+          PY
