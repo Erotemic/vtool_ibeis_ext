@@ -3,6 +3,7 @@ name: BinPyCI
 on:
   push:
   pull_request:
+    branches: [ main ]
 
 jobs:
   build_binpy_wheels:
@@ -45,6 +46,7 @@ jobs:
 
   test_binpy_wheels:
     name: test ${{ matrix.os }} / py${{ matrix.python-version }}
+    if: "! startsWith(github.event.ref, 'refs/heads/release')"
     runs-on: ${{ matrix.os }}
     needs: [build_binpy_wheels]
     strategy:
@@ -129,11 +131,11 @@ jobs:
         run: |
           python - <<'PY'
           import os
-          import shutil
-          import tempfile
           import pathlib
+          import shutil
           import subprocess
           import sys
+          import tempfile
 
           workspace = pathlib.Path(os.environ['GITHUB_WORKSPACE'])
           sandbox = pathlib.Path(tempfile.mkdtemp(prefix='vtool-tests-'))
@@ -155,3 +157,154 @@ jobs:
           print('Running:', ' '.join(cmd))
           subprocess.check_call(cmd, cwd=sandbox)
           PY
+
+  test_deploy:
+    name: Deploy Test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && ! startsWith(github.event.ref, 'refs/heads/release')
+    needs: [build_binpy_wheels]
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Download wheels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          merge-multiple: true
+          path: wheelhouse
+
+      - name: Show files to upload
+        shell: bash
+        run: ls -la wheelhouse
+
+      - name: Sign and Publish to TestPyPI
+        env:
+          TWINE_REPOSITORY_URL: https://test.pypi.org/legacy/
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TEST_TWINE_PASSWORD }}
+          CI_SECRET: ${{ secrets.CI_SECRET }}
+        shell: bash
+        run: |
+          if [ -z "$TWINE_PASSWORD" ]; then
+            echo "No TEST_TWINE_PASSWORD set; skipping test deploy"
+            exit 0
+          fi
+          GPG_EXECUTABLE=gpg
+          openssl enc -aes-256-cbc -pbkdf2 -md SHA512 -pass env:CI_SECRET -d -a -in dev/ci_public_gpg_key.pgp.enc | $GPG_EXECUTABLE --import
+          openssl enc -aes-256-cbc -pbkdf2 -md SHA512 -pass env:CI_SECRET -d -a -in dev/gpg_owner_trust.enc | $GPG_EXECUTABLE --import-ownertrust
+          openssl enc -aes-256-cbc -pbkdf2 -md SHA512 -pass env:CI_SECRET -d -a -in dev/ci_secret_gpg_subkeys.pgp.enc | $GPG_EXECUTABLE --import
+          GPG_KEYID=$(cat dev/public_gpg_key)
+          for WHEEL_PATH in wheelhouse/*.whl; do
+            $GPG_EXECUTABLE --batch --yes --detach-sign --armor --local-user "$GPG_KEYID" --output "$WHEEL_PATH.asc" "$WHEEL_PATH"
+          done
+          python -m pip install --upgrade pip twine opentimestamps-client
+          ots stamp wheelhouse/*.whl wheelhouse/*.asc
+          twine upload --username "$TWINE_USERNAME" --password "$TWINE_PASSWORD" --repository-url "$TWINE_REPOSITORY_URL" wheelhouse/*.whl --skip-existing --verbose
+
+      - name: Upload deploy artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy_artifacts
+          path: |
+            wheelhouse/*.whl
+            wheelhouse/*.asc
+            wheelhouse/*.ots
+
+  live_deploy:
+    name: Deploy Live
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags') || startsWith(github.event.ref, 'refs/heads/release'))
+    needs: [build_binpy_wheels]
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Download wheels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          merge-multiple: true
+          path: wheelhouse
+
+      - name: Show files to upload
+        shell: bash
+        run: ls -la wheelhouse
+
+      - name: Sign and Publish to PyPI
+        env:
+          TWINE_REPOSITORY_URL: https://upload.pypi.org/legacy/
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+          CI_SECRET: ${{ secrets.CI_SECRET }}
+        shell: bash
+        run: |
+          if [ -z "$TWINE_PASSWORD" ]; then
+            echo "No TWINE_PASSWORD set; skipping live deploy"
+            exit 0
+          fi
+          GPG_EXECUTABLE=gpg
+          openssl enc -aes-256-cbc -pbkdf2 -md SHA512 -pass env:CI_SECRET -d -a -in dev/ci_public_gpg_key.pgp.enc | $GPG_EXECUTABLE --import
+          openssl enc -aes-256-cbc -pbkdf2 -md SHA512 -pass env:CI_SECRET -d -a -in dev/gpg_owner_trust.enc | $GPG_EXECUTABLE --import-ownertrust
+          openssl enc -aes-256-cbc -pbkdf2 -md SHA512 -pass env:CI_SECRET -d -a -in dev/ci_secret_gpg_subkeys.pgp.enc | $GPG_EXECUTABLE --import
+          GPG_KEYID=$(cat dev/public_gpg_key)
+          for WHEEL_PATH in wheelhouse/*.whl; do
+            $GPG_EXECUTABLE --batch --yes --detach-sign --armor --local-user "$GPG_KEYID" --output "$WHEEL_PATH.asc" "$WHEEL_PATH"
+          done
+          python -m pip install --upgrade pip twine opentimestamps-client
+          ots stamp wheelhouse/*.whl wheelhouse/*.asc
+          twine upload --username "$TWINE_USERNAME" --password "$TWINE_PASSWORD" --repository-url "$TWINE_REPOSITORY_URL" wheelhouse/*.whl --skip-existing --verbose
+
+      - name: Upload deploy artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy_artifacts
+          path: |
+            wheelhouse/*.whl
+            wheelhouse/*.asc
+            wheelhouse/*.ots
+
+  release:
+    name: Create Github Release
+    if: github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags') || startsWith(github.event.ref, 'refs/heads/release'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs: [live_deploy]
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: deploy_artifacts
+          path: wheelhouse
+
+      - name: Show files to release
+        shell: bash
+        run: ls -la wheelhouse
+
+      - name: Tag Release Commit
+        if: startsWith(github.event.ref, 'refs/heads/release')
+        shell: bash
+        run: |
+          VERSION=$(python -c "import vtool_ibeis_ext as m; print(m.__version__)")
+          git tag "v$VERSION"
+          git push origin "v$VERSION"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          name: Release ${{ github.ref }}
+          body: Automatic Release
+          generate_release_notes: true
+          draft: true
+          prerelease: false
+          files: |
+            wheelhouse/*.whl
+            wheelhouse/*.asc
+            wheelhouse/*.ots
