@@ -69,11 +69,17 @@ jobs:
 
       - name: Diagnostics
         run: |
+          DIAG_SANDBOX="$(mktemp -d)"
+          cd "$DIAG_SANDBOX"
           python - <<'PY'
           import sys
+          import os
+          workspace = os.environ.get('GITHUB_WORKSPACE', '')
+          sys.path = [p for p in sys.path if workspace not in os.path.abspath(p)]
           import vtool_ibeis_ext
           import vtool_ibeis_ext._sver as _sver
           print('Python:', sys.version)
+          print('sys.path[0]:', sys.path[0])
           print('Package path:', vtool_ibeis_ext.__file__)
           print('Extension path:', _sver.__file__)
           PY

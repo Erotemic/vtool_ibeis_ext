@@ -6,7 +6,16 @@ from typing import List, Sequence, Tuple
 
 import numpy as np
 
-from . import _sver
+from . import _sver as _sver_mod
+
+
+def _get_backend_module():
+    if _sver_mod is None:
+        raise ImportError(
+            "vtool_ibeis_ext._sver is not available. Build/install the wheel "
+            "before calling sver_c_wrapper functions."
+        )
+    return _sver_mod
 
 ArrayF64 = np.ndarray
 ArrayI64 = np.ndarray
@@ -22,7 +31,8 @@ def get_affine_inliers_cpp(
     ori_thresh: float,
 ) -> Tuple[List[np.ndarray], List[Tuple[np.ndarray, np.ndarray, np.ndarray]], np.ndarray]:
     """Return per-hypothesis inliers, errors, and affine matrices."""
-    inlier_flags, errors, mats = _sver.get_affine_inliers(
+    backend = _get_backend_module()
+    inlier_flags, errors, mats = backend.get_affine_inliers(
         kpts1,
         kpts2,
         fm,
@@ -46,7 +56,8 @@ def get_best_affine_inliers_cpp(
     ori_thresh: float,
 ) -> Tuple[np.ndarray, Tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray]:
     """Return the best hypothesis inliers, errors, and affine matrix."""
-    inlier_flags, errors, mat = _sver.get_best_affine_inliers(
+    backend = _get_backend_module()
+    inlier_flags, errors, mat = backend.get_best_affine_inliers(
         kpts1,
         kpts2,
         fm,
