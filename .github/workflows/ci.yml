@@ -23,4 +23,23 @@ jobs:
           python -m maturin build -o dist
           python -m pip install --force-reinstall dist/*.whl
       - name: Run tests
-        run: pytest -q
+        run: |
+          python - <<'PY'
+          import sys
+          import vtool_ibeis_ext
+          print('Python executable:', sys.executable)
+          print('Python version:', sys.version)
+          print('Installed vtool_ibeis_ext:', vtool_ibeis_ext.__file__)
+          try:
+              import vtool_ibeis_ext._sver as _sver
+              print('Installed _sver:', _sver.__file__)
+          except Exception as ex:
+              print('Failed to import installed _sver:', repr(ex))
+              raise
+          PY
+
+          TEST_SANDBOX="$(mktemp -d)"
+          echo "Using TEST_SANDBOX=$TEST_SANDBOX"
+          cp -r tests "$TEST_SANDBOX/tests"
+          cd "$TEST_SANDBOX"
+          python -m pytest -q tests
