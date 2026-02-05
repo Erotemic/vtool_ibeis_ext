@@ -1,4 +1,6 @@
-use numpy::{PyArray1, PyArray2, PyArray3, PyReadonlyArray1, PyReadonlyArray2};
+use numpy::{
+    PyArray1, PyArray2, PyArray3, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray2,
+};
 use pyo3::prelude::*;
 
 #[derive(Clone, Copy, Debug)]
@@ -134,9 +136,9 @@ fn get_affine_inliers(
         invvr2_list.push(inv_v_mat(&kpt2));
     }
 
-    let out_inliers = PyArray2::<bool>::zeros(py, [num_matches, num_matches], false);
-    let out_errors = PyArray3::<f64>::zeros(py, [num_matches, 3, num_matches], false);
-    let out_mats = PyArray3::<f64>::zeros(py, [num_matches, 3, 3], false);
+    let out_inliers = PyArray2::<bool>::zeros_bound(py, [num_matches, num_matches], false);
+    let out_errors = PyArray3::<f64>::zeros_bound(py, [num_matches, 3, num_matches], false);
+    let out_mats = PyArray3::<f64>::zeros_bound(py, [num_matches, 3, 3], false);
 
     let mut inliers_view = unsafe { out_inliers.as_array_mut() };
     let mut errors_view = unsafe { out_errors.as_array_mut() };
@@ -169,9 +171,9 @@ fn get_affine_inliers(
     }
 
     Ok((
-        out_inliers.to_owned(),
-        out_errors.to_owned(),
-        out_mats.to_owned(),
+        out_inliers.unbind(),
+        out_errors.unbind(),
+        out_mats.unbind(),
     ))
 }
 
@@ -203,9 +205,9 @@ fn get_best_affine_inliers(
         invvr2_list.push(inv_v_mat(&kpt2));
     }
 
-    let out_inliers = PyArray1::<bool>::zeros(py, [num_matches], false);
-    let out_errors = PyArray2::<f64>::zeros(py, [3, num_matches], false);
-    let out_mat = PyArray2::<f64>::zeros(py, [3, 3], false);
+    let out_inliers = PyArray1::<bool>::zeros_bound(py, [num_matches], false);
+    let out_errors = PyArray2::<f64>::zeros_bound(py, [3, num_matches], false);
+    let out_mat = PyArray2::<f64>::zeros_bound(py, [3, 3], false);
 
     let mut best_weight = f64::NEG_INFINITY;
     let mut best_inliers = vec![false; num_matches];
@@ -264,11 +266,11 @@ fn get_best_affine_inliers(
         }
     }
 
-    Ok((out_inliers.to_owned(), out_errors.to_owned(), out_mat.to_owned()))
+    Ok((out_inliers.unbind(), out_errors.unbind(), out_mat.unbind()))
 }
 
 #[pymodule]
-fn _sver(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn _sver(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(get_affine_inliers, m)?)?;
     m.add_function(wrap_pyfunction!(get_best_affine_inliers, m)?)?;
     Ok(())
