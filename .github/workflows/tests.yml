@@ -91,7 +91,9 @@ jobs:
           import os
           import sys
           import vtool_ibeis_ext
-          import vtool_ibeis_ext._sver as _sver
+          _sver = vtool_ibeis_ext._sver
+          if _sver is None:
+              raise RuntimeError('vtool_ibeis_ext._sver backend was not loaded')
           print('Python:', sys.version)
           print('Workspace:', os.environ.get('GITHUB_WORKSPACE'))
           print('Package path:', vtool_ibeis_ext.__file__)
