@@ -42,9 +42,8 @@ features = ["pyo3/extension-module"]
 build = "cp39-*"
 skip = "pp* *-musllinux_* *i686"
 build-verbosity = 1
-test-command = "python -m pytest -q"
+test-command = "python -m pytest -q {project}/tests"
 test-requires = ["pytest>=7.0", "numpy>=1.21"]
-test-sources = ["tests"]
 
 [tool.cibuildwheel.linux]
 before-all = "curl -sSf https://sh.rustup.rs | sh -s -- -y && source $HOME/.cargo/env && rustup show"
