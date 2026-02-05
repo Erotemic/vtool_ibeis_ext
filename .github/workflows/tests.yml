@@ -25,6 +25,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Build wheel
+        shell: bash
         run: |
           python -m pip install --upgrade pip
           python -m pip install maturin
@@ -68,6 +69,7 @@ jobs:
           path: wheelhouse
 
       - name: Install wheel and test dependencies
+        shell: bash
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest numpy xdoctest pytest-cov
@@ -83,6 +85,7 @@ jobs:
           python -m pip install --force-reinstall vtool_ibeis_ext==1.0.0 -f wheelhouse
 
       - name: Diagnostics
+        shell: bash
         run: |
           python - <<'PY'
           import os
@@ -96,6 +99,7 @@ jobs:
           PY
 
       - name: Run tests in sandbox
+        shell: bash
         run: |
           python - <<'PY'
           import os
