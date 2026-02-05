@@ -51,4 +51,4 @@ before-all = "curl -sSf https://sh.rustup.rs | sh -s -- -y && source $HOME/.carg
 environment = { PATH = "$HOME/.cargo/bin:$PATH" }
 
 [tool.pytest.ini_options]
-addopts = "-q"
+addopts = ""
