@@ -1,37 +1,32 @@
+vtool_ibeis_ext
+==============
 
-The vtool_ibeis_ext Module
-==========================
+``vtool_ibeis_ext`` provides spatial verification helper functions backed by a
+Rust extension module (PyO3 + abi3), while preserving the historical Python
+wrapper API.
 
-|Pypi| |PypiDownloads| |GithubActions| |Codecov|
+Stable API
+----------
 
+The following functions remain stable and importable from
+``vtool_ibeis_ext.sver_c_wrapper``:
 
-+------------------+----------------------------------------------+
-| Github           | https://github.com/Erotemic/vtool_ibeis_ext  |
-+------------------+----------------------------------------------+
-| Pypi             | https://pypi.org/project/vtool_ibeis_ext     |
-+------------------+----------------------------------------------+
+* ``get_affine_inliers_cpp``
+* ``get_best_affine_inliers_cpp``
 
+Install
+-------
 
-Contains the binary spatial verification code used by `vtool_ibeis <https://github.com/Erotemic/vtool_ibeis>`_
+.. code-block:: bash
 
-This is mainly maintained for the `IBEIS <https://github.com/Erotemic/IBEIS>`_ application.
+   pip install vtool_ibeis_ext
 
-Binary packages related to IBEIS:
+Development
+-----------
 
-* https://github.com/Erotemic/vtool_ibeis_ext
-* https://github.com/Erotemic/pyflann_ibeis
-* https://github.com/Erotemic/pyhesaff
+.. code-block:: bash
 
-
-.. |Pypi| image:: https://img.shields.io/pypi/v/vtool_ibeis_ext.svg
-    :target: https://pypi.python.org/pypi/vtool_ibeis_ext
-
-.. |PypiDownloads| image:: https://img.shields.io/pypi/dm/vtool_ibeis_ext.svg
-    :target: https://pypistats.org/packages/vtool_ibeis_ext
-
-.. |GithubActions| image:: https://github.com/Erotemic/vtool_ibeis_ext/actions/workflows/tests.yml/badge.svg?branch=main
-    :target: https://github.com/Erotemic/vtool_ibeis_ext/actions?query=branch%3Amain
-
-.. |Codecov| image:: https://codecov.io/github/Erotemic/vtool_ibeis_ext/badge.svg?branch=main&service=github
-    :target: https://codecov.io/github/Erotemic/vtool_ibeis_ext?branch=main
-
+   python -m pip install maturin pytest numpy
+   python -m maturin build -o dist
+   python -m pip install --force-reinstall dist/*.whl
+   pytest -q tests
